@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure DevOps Backlog Analytics - Esforço por Usuário</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonte Inter / Segoe UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Segoe UI"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        azure: {
+                            primary: '#0078D4',
+                            hover: '#106EBE',
+                            dark: '#004578',
+                            light: '#EFF6FC',
+                            bg: '#F3F2F1',
+                            surface: '#FFFFFF',
+                            border: '#EDEBE9',
+                            borderDark: '#D2D0CE',
+                            text: '#323130',
+                            textMuted: '#605E5C',
+                            success: '#107C10',
+                            successBg: '#DFF6DD',
+                            warning: '#D83B01',
+                            warningBg: '#FED9CC',
+                            danger: '#D13438',
+                            dangerBg: '#FDE7E9',
+                            neutral: '#8A8886',
+                            neutralBg: '#F3F2F1'
+                        }
+                    },
+                    boxShadow: {
+                        'fluent': '0 1.6px 3.6px 0 rgba(0,0,0,0.132), 0 0.3px 0.9px 0 rgba(0,0,0,0.108)',
+                        'fluent-hover': '0 3.2px 7.2px 0 rgba(0,0,0,0.132), 0 0.6px 1.8px 0 rgba(0,0,0,0.108)',
+                        'fluent-panel': '-4px 0 16px rgba(0, 0, 0, 0.14)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F3F2F1;
+            color: #323130;
+            font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #F3F2F1; }
+        ::-webkit-scrollbar-thumb { background: #C8C6C4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #A19F9D; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-azure-primary selection:text-white">
+
+    <!-- Barra Superior Global (Azure DevOps Top Bar) -->
+    <header class="bg-azure-primary text-white h-12 px-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
+        <div class="flex items-center space-x-3">
+            <!-- App Launcher -->
+            <button class="p-1.5 hover:bg-azure-hover rounded transition-colors" title="Azure Static Web Apps">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M2 2h3.5v3.5H2V2zm6.25 0h3.5v3.5h-3.5V2zM14.5 2H18v3.5h-3.5V2zM2 8.25h3.5v3.5H2v-3.5zm6.25 0h3.5v3.5h-3.5v-3.5zm6.25 0H18v3.5h-3.5v-3.5zM2 14.5h3.5V18H2v-3.5zm6.25 0h3.5V18h-3.5v-3.5zm6.25 0H18V18h-3.5v-3.5z"/>
+                </svg>
+            </button>
+            
+            <!-- Logo Azure DevOps -->
+            <div class="flex items-center space-x-2 font-semibold text-base tracking-tight">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path d="M22 6.5v11.1l-5.3 4.4-8.2-3v3l-4.5-5.6L16.7 19V5.3L22 6.5zM16.7 5.3L8.2 2v3.1L2 7.5v8.2l2 2.5V9.1l12.7-3.8z"/>
+                </svg>
+                <span>Azure DevOps</span>
+            </div>
+
+            <span class="text-white/40 hidden sm:inline">|</span>
+
+            <!-- Breadcrumbs -->
+            <nav aria-label="Breadcrumb" class="hidden md:flex items-center space-x-2 text-sm text-white/90">
+                <span id="breadcrumbOrg" class="hover:underline cursor-pointer">Organização</span>
+                <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span id="breadcrumbProject" class="hover:underline cursor-pointer">Projeto</span>
+                <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span class="font-semibold text-white bg-white/15 px-2 py-0.5 rounded">Backlog Geral</span>
+            </nav>
+        </div>
+
+        <!-- Direita: Status Conexão API, Auto-Refresh & Exportação -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Botão Conectar Azure API -->
+            <button onclick="openConfigModal()" id="apiStatusBtn" class="flex items-center space-x-1.5 text-xs bg-azure-dark/80 hover:bg-azure-dark px-2.5 py-1.5 rounded border border-white/20 transition-colors" title="Configurar conexão real com a REST API do Azure DevOps">
+                <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span id="apiStatusText" class="font-medium">Modo Demo (Conectar Azure)</span>
+            </button>
+
+            <!-- Auto-Refresh Toggle -->
+            <button id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="hidden md:flex items-center space-x-1.5 text-xs bg-azure-dark/60 hover:bg-azure-dark px-2.5 py-1.5 rounded border border-white/15 transition-colors" title="Alternar atualização automática">
+                <span id="autoRefreshDot" class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span id="autoRefreshLabel">Auto: 60s</span>
+            </button>
+
+            <!-- Botão Refresh Manual -->
+            <button onclick="syncWithAzure(false)" class="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded transition-colors" title="Sincronizar agora">
+                <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
+
+            <!-- Botão Exportar CSV -->
+            <button onclick="exportToCSV()" class="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-2.5 py-1.5 rounded transition-colors" title="Exportar CSV">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span class="hidden sm:inline">CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sub-cabeçalho: Título e Filtros Globais -->
+    <div class="bg-white border-b border-azure-border px-4 sm:px-6 py-4">
+        <div class="max-w-[1600px] mx-auto">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h1 class="text-xl sm:text-2xl font-semibold text-azure-text tracking-tight">
+                            Backlog Analytics — Esforço e Atividades por Usuário
+                        </h1>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-azure-light text-azure-primary border border-azure-primary/20">
+                            Sem Vínculo de Sprint
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-azure-textMuted mt-0.5">
+                        Acompanhamento geral de horas do projeto, Esforço planejado vs. Esforço Real e status do backlog.
+                    </p>
+                </div>
+
+                <!-- Filtros -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Filtro: Usuário -->
+                    <div class="flex flex-col">
+                        <label for="userFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Usuário (Assigned To)</label>
+                        <div class="relative">
+                            <select id="userFilter" onchange="applyFilters()" class="appearance-none bg-white border border-azure-borderDark hover:border-azure-primary text-azure-text text-sm rounded px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-azure-primary/30 focus:border-azure-primary transition-colors cursor-pointer font-medium">
+                                <option value="ALL">Todos os Usuários</option>
+                            </select>
+                            <svg class="w-4 h-4 text-azure-textMuted absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Filtro: Status -->
+                    <div class="flex flex-col">
+                        <label for="statusFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Status (State)</label>
+                        <div class="relative">
+                            <select id="statusFilter" onchange="applyFilters()" class="appearance-none bg-white border border-azure-borderDark hover:border-azure-primary text-azure-text text-sm rounded px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-azure-primary/30 focus:border-azure-primary transition-colors cursor-pointer">
+                                <option value="ALL">Todos os Status</option>
+                                <option value="TODO">TODO</option>
+                                <option value="DOING">DOING</option>
+                                <option value="WAITING FOR INTEGRATION">WAITING FOR INTEGRATION</option>
+                                <option value="WATING">WATING</option>
+                                <option value="DONEE">DONEE</option>
+                            </select>
+                            <svg class="w-4 h-4 text-azure-textMuted absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Filtro: Tipo de Work Item -->
+                    <div class="flex flex-col">
+                        <label for="typeFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Tipo de Item</label>
+                        <div class="relative">
+                            <select id="typeFilter" onchange="applyFilters()" class="appearance-none bg-white border border-azure-borderDark hover:border-azure-primary text-azure-text text-sm rounded px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-azure-primary/30 focus:border-azure-primary transition-colors cursor-pointer">
+                                <option value="ALL">Todos os Tipos</option>
+                                <option value="Epic">Epic</option>
+                                <option value="Feature">Feature</option>
+                                <option value="User Story">User Story</option>
+                                <option value="Task">Task</option>
+                                <option value="Bug">Bug</option>
+                            </select>
+                            <svg class="w-4 h-4 text-azure-textMuted absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Botão Limpar -->
+                    <div class="flex flex-col justify-end self-end">
+                        <button onclick="resetFilters()" class="px-3 py-1.5 text-sm text-azure-primary hover:bg-azure-light border border-transparent hover:border-azure-primary/20 rounded font-medium transition-colors flex items-center space-x-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Limpar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Seção 1: 4 Cards de KPI -->
+        <section aria-label="Indicadores Principais do Backlog" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            
+            <!-- KPI 1: Horas Gerais do Projeto vs. Utilizadas -->
+            <div class="bg-white rounded border border-azure-border shadow-fluent hover:shadow-fluent-hover transition-shadow p-4 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-azure-dark"></div>
+                <div class="flex items-start justify-between">
+                    <div class="min-w-0 flex-1 pr-2">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Horas Gerais do Projeto</span>
+                            <button onclick="toggleProjectBudgetEdit()" class="text-azure-textMuted hover:text-azure-primary p-0.5 rounded transition-colors" title="Editar orçamento total de horas do projeto">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </div>
+
+                        <div id="projectBudgetDisplay" class="mt-2 flex items-baseline flex-wrap gap-x-2">
+                            <span id="kpiProjectUsedHours" class="text-2xl sm:text-3xl font-bold text-azure-text">0h</span>
+                            <span id="kpiProjectTotalHours" class="text-xs sm:text-sm font-medium text-azure-textMuted">/ 1.200h totais</span>
+                        </div>
+
+                        <div id="projectBudgetEditor" class="hidden mt-2 flex items-center space-x-1.5">
+                            <input type="number" id="projectBudgetInput" min="1" max="100000" step="10" value="1200" class="w-24 bg-white border border-azure-primary rounded px-2 py-1 text-sm font-mono font-semibold text-azure-text focus:outline-none">
+                            <button onclick="saveProjectBudget()" class="px-2 py-1 bg-azure-primary hover:bg-azure-hover text-white text-xs font-medium rounded">OK</button>
+                            <button onclick="toggleProjectBudgetEdit()" class="px-1.5 py-1 text-xs text-azure-textMuted hover:text-azure-text">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded bg-azure-light text-azure-dark shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-azure-textMuted">Saldo Projeto: <strong id="kpiProjectRemainingHours" class="text-azure-text">0h</strong></span>
+                        <span id="kpiProjectUsedPct" class="font-semibold text-azure-primary">0%</span>
+                    </div>
+                    <div class="w-full bg-azure-bg rounded-full h-1.5 overflow-hidden">
+                        <div id="kpiProjectBudgetBar" class="bg-azure-dark h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 2: Esforço Planejado (Effort) -->
+            <div class="bg-white rounded border border-azure-border shadow-fluent hover:shadow-fluent-hover transition-shadow p-4 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-azure-primary"></div>
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Esforço Planejado (Backlog)</span>
+                        <div class="mt-2 flex items-baseline space-x-2">
+                            <span id="kpiPlannedEffort" class="text-2xl sm:text-3xl font-bold text-azure-text">0h</span>
+                            <span id="kpiTotalItemsBadge" class="text-xs font-medium text-azure-textMuted">em 0 itens</span>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded bg-azure-light text-azure-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    </div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1 text-[11px]" id="kpiTypesBreakdown"></div>
+            </div>
+
+            <!-- KPI 3: Esforço Real Consumido -->
+            <div class="bg-white rounded border border-azure-border shadow-fluent hover:shadow-fluent-hover transition-shadow p-4 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-[#008272]"></div>
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Esforço Real (Escopo)</span>
+                        <div class="mt-2 flex items-baseline space-x-2">
+                            <span id="kpiActualEffort" class="text-2xl sm:text-3xl font-bold text-azure-text">0h</span>
+                            <span id="kpiEffortRatioBadge" class="text-xs font-semibold px-2 py-0.5 rounded bg-[#E0F2F1] text-[#008272]">0% do esforço</span>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded bg-[#E0F2F1] text-[#008272]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-azure-textMuted">Saldo do Escopo</span>
+                        <span id="kpiEffortVariance" class="font-semibold text-azure-text">0h</span>
+                    </div>
+                    <div class="w-full bg-azure-bg rounded-full h-1.5 overflow-hidden">
+                        <div id="kpiEffortBurnBar" class="bg-[#008272] h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 4: Taxa de Conclusão (DONEE) -->
+            <div class="bg-white rounded border border-azure-border shadow-fluent hover:shadow-fluent-hover transition-shadow p-4 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full bg-azure-success"></div>
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Taxa de Conclusão (DONEE)</span>
+                        <div class="mt-2 flex items-baseline space-x-2">
+                            <span id="kpiCompletionRate" class="text-2xl sm:text-3xl font-bold text-azure-text">0%</span>
+                            <span id="kpiCompletedFraction" class="text-xs font-medium text-azure-success bg-azure-successBg px-2 py-0.5 rounded">0 / 0 DONEE</span>
+                        </div>
+                    </div>
+                    <div class="p-2 rounded bg-azure-successBg text-azure-success">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-azure-textMuted">Progresso DONEE</span>
+                        <span id="kpiWaitingWarning" class="font-medium text-azure-textMuted">0 em espera</span>
+                    </div>
+                    <div class="w-full bg-azure-bg rounded-full h-1.5 overflow-hidden">
+                        <div id="kpiCompletionBar" class="bg-azure-success h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Seção 2: Gráficos Interativos (SVG Nativo — Zero Dependência Externa) -->
+        <section aria-label="Gráficos Analíticos do Backlog" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Gráfico de Barras Agrupadas: Esforço Planejado vs. Esforço Real por Usuário -->
+            <div class="lg:col-span-8 bg-white rounded border border-azure-border shadow-fluent p-4 sm:p-5 flex flex-col justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-base font-semibold text-azure-text">Esforço Planejado vs. Esforço Real por Usuário</h2>
+                        <p class="text-xs text-azure-textMuted">Clique em qualquer colaborador para abrir suas atividades vinculadas</p>
+                    </div>
+                    <div class="flex items-center space-x-4 text-xs">
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-3 h-3 rounded-sm bg-[#0078D4]"></span>
+                            <span>Esforço Planejado (h)</span>
+                        </span>
+                        <span class="flex items-center space-x-1.5">
+                            <span class="w-3 h-3 rounded-sm bg-[#008272]"></span>
+                            <span>Esforço Real (h)</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- Container do Gráfico de Barras SVG -->
+                <div id="effortBarChartContainer" class="w-full overflow-x-auto"></div>
+            </div>
+
+            <!-- Gráfico Donut: Distribuição do Backlog por Status -->
+            <div class="lg:col-span-4 bg-white rounded border border-azure-border shadow-fluent p-4 sm:p-5 flex flex-col justify-between">
+                <div class="mb-3">
+                    <h2 class="text-base font-semibold text-azure-text">Status das Atividades (Backlog)</h2>
+                    <p class="text-xs text-azure-textMuted">Clique em um status para filtrar o painel</p>
+                </div>
+                <!-- Container do Gráfico Donut SVG -->
+                <div id="statusDonutContainer" class="flex items-center justify-center my-2"></div>
+                <!-- Legenda Interativa -->
+                <div id="statusLegendGrid" class="mt-3 pt-3 border-t border-azure-border grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs"></div>
+            </div>
+
+        </section>
+
+        <!-- Seção 3: Visão Rápida por Membro da Equipe -->
+        <section aria-label="Visão Rápida por Membro">
+            <div class="flex items-center justify-between mb-2.5">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-azure-textMuted">Visão Rápida por Membro da Equipe</h2>
+                <span class="text-xs text-azure-textMuted">Clique no card do membro para ver todas as atividades vinculadas</span>
+            </div>
+            <div id="memberCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3"></div>
+        </section>
+
+        <!-- Seção 4: Detalhamento de Work Items -->
+        <section aria-label="Detalhamento de Work Items" class="bg-white rounded border border-azure-border shadow-fluent overflow-hidden">
+            <div class="p-4 border-b border-azure-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FAF9F8]">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-azure-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    <h2 class="text-base font-semibold text-azure-text">Detalhamento de Work Items</h2>
+                    <span id="tableCountBadge" class="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-azure-bg text-azure-text border border-azure-borderDark">
+                        0 itens
+                    </span>
+                </div>
+
+                <div class="relative w-full sm:w-72">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        oninput="applyFilters()" 
+                        placeholder="Buscar por ID, título ou responsável..." 
+                        class="w-full bg-white border border-azure-borderDark hover:border-azure-primary focus:border-azure-primary focus:ring-2 focus:ring-azure-primary/20 rounded pl-8 pr-3 py-1.5 text-xs text-azure-text placeholder-azure-textMuted focus:outline-none transition-all"
+                    >
+                    <svg class="w-4 h-4 text-azure-textMuted absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-azure-border bg-white text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted select-none">
+                            <th class="py-3 px-4 cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('id')">
+                                <div class="flex items-center space-x-1"><span>ID</span><span id="sort-id">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('type')">
+                                <div class="flex items-center space-x-1"><span>Tipo</span><span id="sort-type">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-azure-bg transition-colors min-w-[260px]" onclick="sortTable('title')">
+                                <div class="flex items-center space-x-1"><span>Título da Atividade</span><span id="sort-title">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('user')">
+                                <div class="flex items-center space-x-1"><span>Responsável</span><span id="sort-user">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('status')">
+                                <div class="flex items-center space-x-1"><span>Status</span><span id="sort-status">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 text-right cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('plannedEffort')">
+                                <div class="flex items-center justify-end space-x-1"><span>Esforço</span><span id="sort-plannedEffort">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 text-right cursor-pointer hover:bg-azure-bg transition-colors" onclick="sortTable('actualEffort')">
+                                <div class="flex items-center justify-end space-x-1"><span>Esforço Real</span><span id="sort-actualEffort">↕</span></div>
+                            </th>
+                            <th class="py-3 px-4 w-36">Execução</th>
+                            <th class="py-3 px-4 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="workItemsTableBody" class="divide-y divide-azure-border text-sm"></tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="hidden py-12 px-4 text-center">
+                <svg class="w-12 h-12 text-azure-neutral mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <h3 class="text-base font-semibold text-azure-text">Nenhum Work Item encontrado</h3>
+                <p class="text-xs text-azure-textMuted mt-1">Tente ajustar os filtros acima para visualizar os itens do backlog.</p>
+                <button onclick="resetFilters()" class="mt-4 px-4 py-1.5 bg-azure-primary hover:bg-azure-hover text-white text-xs font-medium rounded transition-colors">
+                    Limpar Filtros
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Backdrop Global -->
+    <div id="globalBackdrop" onclick="closeAllDrawers()" class="fixed inset-0 bg-black/30 backdrop-blur-[1px] z-40 hidden transition-opacity"></div>
+
+    <!-- Modal de Configuração da REST API do Azure DevOps -->
+    <div id="apiConfigModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg border border-azure-border shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="px-6 py-4 bg-azure-primary text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <h3 class="text-base font-semibold">Conectar à REST API do Azure DevOps</h3>
+                </div>
+                <button onclick="closeConfigModal()" class="text-white/80 hover:text-white">✕</button>
+            </div>
+            
+            <div class="p-6 space-y-4 text-sm max-h-[80vh] overflow-y-auto">
+                <div class="p-3 bg-azure-light border border-azure-primary/20 rounded text-xs text-azure-text leading-relaxed">
+                    <strong>Pronto para Azure Static Web Apps:</strong> Preencha os dados abaixo para puxar automaticamente todos os itens do seu Backlog (Epics, Features, User Stories, Tasks e Bugs) sem vínculo de Sprint.
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-azure-text mb-1">Organização (Organization) *</label>
+                        <input type="text" id="cfgOrg" placeholder="ex: minha-empresa" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-azure-text mb-1">Projeto (Project) *</label>
+                        <input type="text" id="cfgProject" placeholder="ex: MeuProjeto" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-azure-text mb-1">Personal Access Token (PAT) *</label>
+                    <input type="password" id="cfgPat" placeholder="Cole seu token com permissão Work Items (Read & Write)" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-azure-primary">
+                    <p class="text-[11px] text-azure-textMuted mt-1">No Azure DevOps: User Settings (canto superior direito) &gt; Personal access tokens &gt; New Token.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-azure-border">
+                    <div>
+                        <label class="block text-xs font-semibold text-azure-text mb-1">Campo de Esforço (API Name)</label>
+                        <input type="text" id="cfgPlannedField" value="Microsoft.VSTS.Scheduling.Effort" class="w-full border border-azure-borderDark rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-azure-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-azure-text mb-1">Campo de Esforço Real (API Name)</label>
+                        <input type="text" id="cfgActualField" value="Microsoft.VSTS.Scheduling.CompletedWork" class="w-full border border-azure-borderDark rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-azure-primary">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-azure-text mb-1">Orçamento Total de Horas do Projeto</label>
+                    <input type="number" id="cfgProjectBudget" value="1200" min="1" class="w-full border border-azure-borderDark rounded px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-azure-primary">
+                </div>
+            </div>
+
+            <div class="px-6 py-3.5 bg-[#FAF9F8] border-t border-azure-border flex items-center justify-between">
+                <button onclick="disconnectAzureApi()" class="text-xs text-azure-danger hover:underline font-medium">
+                    Voltar para Dados Demo
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="closeConfigModal()" class="px-3.5 py-1.5 border border-azure-borderDark bg-white hover:bg-azure-bg text-xs font-medium rounded">
+                        Cancelar
+                    </button>
+                    <button onclick="saveAndConnectAzureApi()" class="px-4 py-1.5 bg-azure-primary hover:bg-azure-hover text-white text-xs font-semibold rounded shadow-sm">
+                        Salvar e Sincronizar Agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer Lateral 1: Atividades Vinculadas ao Membro -->
+    <aside id="memberDrawer" aria-label="Atividades do Membro" class="fixed top-0 right-0 h-full w-full max-w-xl bg-white shadow-fluent-panel z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col border-l border-azure-border">
+        <div class="px-6 py-4 border-b border-azure-border flex items-center justify-between bg-[#FAF9F8]">
+            <div class="flex items-center space-x-3" id="memberDrawerHeader"></div>
+            <button onclick="closeMemberDrawer()" class="p-1.5 text-azure-textMuted hover:text-azure-text hover:bg-azure-bg rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="memberDrawerStats" class="px-6 py-3 bg-azure-light/40 border-b border-azure-border grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-3" id="memberDrawerList"></div>
+
+        <div class="px-6 py-3.5 border-t border-azure-border bg-[#FAF9F8] flex items-center justify-between">
+            <button id="memberFilterApplyBtn" class="text-xs font-semibold text-azure-primary hover:underline">
+                Filtrar todo o dashboard por este usuário
+            </button>
+            <button onclick="closeMemberDrawer()" class="px-4 py-1.5 bg-azure-primary hover:bg-azure-hover text-white text-sm font-medium rounded transition-colors">
+                Fechar
+            </button>
+        </div>
+    </aside>
+
+    <!-- Drawer Lateral 2: Edição Rápida do Work Item -->
+    <aside id="workItemBlade" aria-label="Detalhes do Work Item" class="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-fluent-panel z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col border-l border-azure-border">
+        <div class="px-6 py-4 border-b border-azure-border flex items-center justify-between bg-[#FAF9F8]">
+            <div class="flex items-center space-x-2.5" id="bladeHeaderBadge"></div>
+            <button onclick="closeWorkItemBlade()" class="p-1.5 text-azure-textMuted hover:text-azure-text hover:bg-azure-bg rounded transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-5" id="bladeContent"></div>
+
+        <div class="px-6 py-3.5 border-t border-azure-border bg-[#FAF9F8] flex items-center justify-end space-x-2">
+            <button onclick="closeWorkItemBlade()" class="px-4 py-1.5 border border-azure-borderDark bg-white hover:bg-azure-bg text-azure-text text-sm font-medium rounded transition-colors">
+                Cancelar
+            </button>
+            <button onclick="saveWorkItemChanges()" class="px-4 py-1.5 bg-azure-primary hover:bg-azure-hover text-white text-sm font-medium rounded shadow-sm transition-colors">
+                Salvar Alterações
+            </button>
+        </div>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-azure-text text-white px-4 py-3 rounded shadow-lg text-sm flex items-center space-x-2.5 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <svg class="w-5 h-5 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Sincronizado!</span>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. CONFIGURAÇÕES E CONSTANTES
+        // =========================================================================
+        const STATUS_LIST = ["TODO", "DOING", "WAITING FOR INTEGRATION", "WATING", "DONEE"];
+        const USER_PALETTE = ["#0078D4", "#107C10", "#8764B8", "#008272", "#D83B01", "#4F6BED", "#B4009E", "#038387"];
+
+        // Configuração da API (pode ser preenchida fixo aqui ou via Modal no navegador)
+        let azureConfig = JSON.parse(localStorage.getItem('azure_devops_backlog_cfg') || 'null') || {
+            org: "",          // Ex: "sua-organizacao"
+            project: "",      // Ex: "seu-projeto"
+            pat: "",          // Ex: "seu-personal-access-token"
+            plannedField: "Microsoft.VSTS.Scheduling.Effort",
+            actualField: "Microsoft.VSTS.Scheduling.CompletedWork"
+        };
+
+        let projectTotalHours = parseFloat(localStorage.getItem('azure_project_budget') || '1200');
+
+        // Dados Demo iniciais (usados enquanto a API real não está conectada)
+        const demoWorkItems = [
+            { id: 2001, type: "Epic",       title: "Modernização da Plataforma Core Cloud no Microsoft Azure", user: "Mariana Silva",   status: "DOING",                   plannedEffort: 120, actualEffort: 84, area: "Backlog\\Arquitetura", description: "Iniciativa estratégica de migração dos serviços legados para arquitetura cloud-native." },
+            { id: 2002, type: "Feature",    title: "Módulo de Autenticação Unificada com Microsoft Entra ID", user: "Mariana Silva",   status: "DONEE",                   plannedEffort: 40,  actualEffort: 38, area: "Backlog\\Segurança",   description: "Implementação de SSO, MFA e políticas de acesso condicional." },
+            { id: 2003, type: "Feature",    title: "Motor de Processamento Assíncrono via Azure Service Bus", user: "Lucas Oliveira",  status: "DOING",                   plannedEffort: 56,  actualEffort: 42, area: "Backlog\\Backend",     description: "Filas e tópicos com dead-lettering para processamento resiliente." },
+            { id: 2004, type: "User Story", title: "API REST de Consulta de Saldos e Extratos Consolidados",  user: "Lucas Oliveira",  status: "DONEE",                   plannedEffort: 24,  actualEffort: 26, area: "Backlog\\Backend",     description: "Endpoints paginados com cache distribuído em Redis." },
+            { id: 2005, type: "Task",       title: "Otimizar índices e queries no Azure SQL Database",        user: "Lucas Oliveira",  status: "WAITING FOR INTEGRATION", plannedEffort: 16,  actualEffort: 15, area: "Backlog\\Database",    description: "Análise de planos de execução e criação de índices compostos." },
+            { id: 2006, type: "Bug",        title: "Falha de timeout intermitente no pool de conexões Redis", user: "Lucas Oliveira",  status: "WATING",                  plannedEffort: 12,  actualEffort: 8,  area: "Backlog\\Backend",     description: "Aguardando janela de manutenção para ajuste de parâmetros TLS." },
+            { id: 2007, type: "Feature",    title: "Novo Portal do Cliente com Design System Fluent UI",      user: "Camila Santos",   status: "DOING",                   plannedEffort: 48,  actualEffort: 34, area: "Backlog\\Frontend",    description: "Reconstrução das telas principais com foco em acessibilidade." },
+            { id: 2008, type: "User Story", title: "Tela de Gestão de Permissões e Perfis de Acesso",         user: "Camila Santos",   status: "DONEE",                   plannedEffort: 20,  actualEffort: 20, area: "Backlog\\Frontend",    description: "Interface para atribuição granular de papéis (RBAC)." },
+            { id: 2009, type: "Task",       title: "Implementar tema escuro e contraste acessível (WCAG AA)", user: "Camila Santos",   status: "WAITING FOR INTEGRATION", plannedEffort: 14,  actualEffort: 12, area: "Backlog\\Frontend",    description: "Validação de tokens de cor e navegação via teclado." },
+            { id: 2010, type: "Bug",        title: "Quebra de layout na tabela de lançamentos em telas mobile",user: "Camila Santos",  status: "TODO",                    plannedEffort: 8,   actualEffort: 0,  area: "Backlog\\Frontend",    description: "Ajustar overflow horizontal em viewports menores que 375px." },
+            { id: 2011, type: "Feature",    title: "Automação de Infraestrutura como Código (Terraform)",     user: "Rafael Costa",    status: "DONEE",                   plannedEffort: 44,  actualEffort: 42, area: "Backlog\\DevOps",      description: "Provisionamento automatizado de VNets, Key Vault e AKS." },
+            { id: 2012, type: "Task",       title: "Configurar pipelines multi-stage no Azure Pipelines",     user: "Rafael Costa",    status: "DOING",                   plannedEffort: 24,  actualEffort: 18, area: "Backlog\\DevOps",      description: "Build, testes automatizados e deploy contínuo." },
+            { id: 2013, type: "Task",       title: "Integrar Azure Key Vault com rotação automática de chaves",user: "Rafael Costa",   status: "DONEE",                   plannedEffort: 16,  actualEffort: 16, area: "Backlog\\Segurança",   description: "Eliminação de connection strings hardcoded." },
+            { id: 2014, type: "User Story", title: "Suíte de Testes E2E Automatizados para Fluxos Críticos",  user: "Beatriz Almeida", status: "DOING",                   plannedEffort: 32,  actualEffort: 22, area: "Backlog\\Qualidade",   description: "Cobertura automatizada com Playwright." },
+            { id: 2015, type: "Task",       title: "Executar testes de carga com Azure Load Testing",         user: "Beatriz Almeida", status: "WATING",                  plannedEffort: 20,  actualEffort: 6,  area: "Backlog\\Qualidade",   description: "Aguardando resolução do item #2006 antes de rodar bateria." },
+            { id: 2016, type: "Task",       title: "Homologação funcional do módulo de relatórios exportáveis",user: "Beatriz Almeida",status: "DONEE",                   plannedEffort: 16,  actualEffort: 15, area: "Backlog\\Qualidade",   description: "Validação de integridade dos arquivos CSV e PDF." },
+            { id: 2017, type: "Feature",    title: "Data Lake Analítico e Pipeline ETL no Azure Synapse",     user: "Thiago Mendes",   status: "DOING",                   plannedEffort: 52,  actualEffort: 36, area: "Backlog\\Dados",       description: "Ingestão incremental de eventos operacionais." },
+            { id: 2018, type: "User Story", title: "Modelagem dimensional de indicadores de produtividade",   user: "Thiago Mendes",   status: "WAITING FOR INTEGRATION", plannedEffort: 24,  actualEffort: 24, area: "Backlog\\Dados",       description: "Criação de views analíticas consolidadas." },
+            { id: 2019, type: "Task",       title: "Criar rotina de verificação de qualidade de dados",       user: "Thiago Mendes",   status: "TODO",                    plannedEffort: 16,  actualEffort: 0,  area: "Backlog\\Dados",       description: "Alertas automáticos para registros inconsistentes." },
+            { id: 2020, type: "User Story", title: "Governança de APIs e Rate Limiting no Azure APIM",        user: "Mariana Silva",   status: "TODO",                    plannedEffort: 22,  actualEffort: 0,  area: "Backlog\\Arquitetura", description: "Configurar políticas de throttling e cache." }
+        ];
+
+        let backlogItems = [...demoWorkItems];
+        let teamMembers = {};
+        let filteredItems = [];
+        let sortState = { key: 'id', direction: 'asc' };
+        let activeMemberDrawerUser = null;
+        let editingWorkItemId = null;
+
+        let autoRefreshEnabled = true;
+        let countdownSeconds = 60;
+        let autoRefreshTimer = null;
+
+        const statusStyles = {
+            "TODO":                    { hex: "#8A8886", bg: "bg-[#F3F2F1]", text: "text-[#605E5C]", dot: "bg-[#8A8886]" },
+            "DOING":                   { hex: "#0078D4", bg: "bg-[#EFF6FC]", text: "text-[#0078D4]", dot: "bg-[#0078D4]" },
+            "WAITING FOR INTEGRATION": { hex: "#8764B8", bg: "bg-[#F3EBF9]", text: "text-[#8764B8]", dot: "bg-[#8764B8]" },
+            "WATING":                  { hex: "#D83B01", bg: "bg-[#FED9CC]", text: "text-[#D83B01]", dot: "bg-[#D83B01]" },
+            "DONEE":                   { hex: "#107C10", bg: "bg-[#DFF6DD]", text: "text-[#107C10]", dot: "bg-[#107C10]" }
+        };
+
+        const typeStyles = {
+            "Epic":       { bg: "bg-[#FFF4CE]", text: "text-[#986F0B]", border: "border-[#F2C811]/60", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+            "Feature":    { bg: "bg-[#F3EBF9]", text: "text-[#773B93]", border: "border-[#8764B8]/40", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" },
+            "User Story": { bg: "bg-[#EFF6FC]", text: "text-[#0078D4]", border: "border-[#0078D4]/30", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+            "Task":       { bg: "bg-[#FFF9E6]", text: "text-[#8A6D00]", border: "border-[#F2C811]/50", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
+            "Bug":        { bg: "bg-[#FDE7E9]", text: "text-[#D13438]", border: "border-[#D13438]/30", icon: "M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" }
+        };
+
+        // =========================================================================
+        // 2. INICIALIZAÇÃO E SINCRONIZAÇÃO COM REST API DO AZURE DEVOPS
+        // =========================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            updateConnectionHeaderUI();
+            if (isAzureConfigured()) {
+                syncWithAzure(false);
+            } else {
+                rebuildTeamDirectory();
+                applyFilters();
+            }
+            startAutoRefreshLoop();
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    closeAllDrawers();
+                    closeConfigModal();
+                }
+            });
+        });
+
+        function isAzureConfigured() {
+            return Boolean(azureConfig && azureConfig.org && azureConfig.project && azureConfig.pat);
+        }
+
+        function updateConnectionHeaderUI() {
+            const dot = document.getElementById('apiStatusDot');
+            const text = document.getElementById('apiStatusText');
+            const bOrg = document.getElementById('breadcrumbOrg');
+            const bProj = document.getElementById('breadcrumbProject');
+
+            if (isAzureConfigured()) {
+                dot.className = "w-2 h-2 rounded-full bg-green-400 animate-pulse";
+                text.textContent = `Conectado: ${azureConfig.project}`;
+                bOrg.textContent = azureConfig.org;
+                bProj.textContent = azureConfig.project;
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400";
+                text.textContent = "Modo Demo (Conectar Azure)";
+                bOrg.textContent = "ContosoCloud-BR";
+                bProj.textContent = "Backlog-Geral";
+            }
+        }
+
+        async function syncWithAzure(isAuto = false) {
+            const icon = document.getElementById('refreshIcon');
+            icon.classList.add('animate-spin');
+            countdownSeconds = 60;
+            updateCountdownUI();
+
+            if (!isAzureConfigured()) {
+                setTimeout(() => {
+                    icon.classList.remove('animate-spin');
+                    rebuildTeamDirectory();
+                    applyFilters();
+                    showToast(isAuto ? "Painel atualizado (Modo Demo)." : "Dados atualizados.");
+                }, 400);
+                return;
+            }
+
+            try {
+                const { org, project, pat, plannedField, actualField } = azureConfig;
+                const authHeader = 'Basic ' + btoa(':' + pat);
+                const baseUrl = `https://dev.azure.com/${encodeURIComponent(org)}/${encodeURIComponent(project)}/_apis/wit`;
+
+                // 1. Consulta WIQL para trazer TODO o Backlog (sem filtro de Sprint)
+                const wiqlQuery = {
+                    query: `SELECT [System.Id] FROM WorkItems 
+                            WHERE [System.TeamProject] = @project 
+                            AND [System.WorkItemType] IN ('Epic', 'Feature', 'User Story', 'Task', 'Bug')
+                            AND [System.State] <> 'Removed'
+                            ORDER BY [System.Id] DESC`
+                };
+
+                const wiqlResp = await fetch(`${baseUrl}/wiql?api-version=7.1`, {
+                    method: 'POST',
+                    headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(wiqlQuery)
+                });
+
+                if (!wiqlResp.ok) throw new Error(`Erro HTTP ${wiqlResp.status} ao consultar WIQL.`);
+                const wiqlData = await wiqlResp.json();
+                const ids = (wiqlData.workItems || []).map(w => w.id).slice(0, 200);
+
+                if (ids.length === 0) {
+                    backlogItems = [];
+                } else {
+                    // 2. Buscar detalhes dos Work Items em lote
+                    const fields = [
+                        'System.Id', 'System.WorkItemType', 'System.Title', 'System.State',
+                        'System.AssignedTo', 'System.AreaPath', 'System.Description',
+                        plannedField, actualField
+                    ].join(',');
+
+                    const batchResp = await fetch(`${baseUrl}/workitems?ids=${ids.join(',')}&fields=${encodeURIComponent(fields)}&api-version=7.1`, {
+                        headers: { 'Authorization': authHeader }
+                    });
+
+                    if (!batchResp.ok) throw new Error(`Erro HTTP ${batchResp.status} ao carregar Work Items.`);
+                    const batchData = await batchResp.json();
+
+                    backlogItems = (batchData.value || []).map(wi => {
+                        const f = wi.fields || {};
+                        const assigned = f['System.AssignedTo']?.displayName || 'Não Atribuído';
+                        const rawState = (f['System.State'] || 'TODO').toUpperCase();
+                        return {
+                            id: wi.id,
+                            type: f['System.WorkItemType'] || 'Task',
+                            title: f['System.Title'] || '(Sem título)',
+                            user: assigned,
+                            status: STATUS_LIST.includes(rawState) ? rawState : rawState,
+                            plannedEffort: parseFloat(f[plannedField]) || 0,
+                            actualEffort: parseFloat(f[actualField]) || 0,
+                            area: f['System.AreaPath'] || project,
+                            description: (f['System.Description'] || 'Sem descrição detalhada.').replace(/<[^>]*>?/gm, '')
+                        };
+                    });
+                }
+
+                rebuildTeamDirectory();
+                applyFilters();
+                if (activeMemberDrawerUser) populateMemberDrawer(activeMemberDrawerUser);
+                showToast(isAuto ? `Sincronizado automaticamente (${backlogItems.length} itens).` : `${backlogItems.length} Work Items sincronizados do Azure!`);
+            } catch (err) {
+                console.error(err);
+                showToast(`Falha na API Azure: ${err.message}`);
+            } finally {
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        function rebuildTeamDirectory() {
+            const uniqueUsers = [...new Set(backlogItems.map(i => i.user))].sort();
+            const newTeam = {};
+            uniqueUsers.forEach((user, idx) => {
+                const parts = user.trim().split(/\s+/);
+                const initials = parts.length >= 2
+                    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                    : user.slice(0, 2).toUpperCase();
+                newTeam[user] = {
+                    role: user === 'Não Atribuído' ? 'Backlog Pendente' : 'Membro do Projeto',
+                    initials,
+                    color: USER_PALETTE[idx % USER_PALETTE.length]
+                };
+            });
+            teamMembers = newTeam;
+
+            const select = document.getElementById('userFilter');
+            const prevVal = select.value;
+            select.innerHTML = `<option value="ALL">Todos os Usuários (${uniqueUsers.length})</option>` +
+                uniqueUsers.map(u => `<option value="${u}">${u}</option>`).join('');
+            if (uniqueUsers.includes(prevVal)) select.value = prevVal;
+        }
+
+        // =========================================================================
+        // 3. MODAL DE CONFIGURAÇÃO DA API
+        // =========================================================================
+        function openConfigModal() {
+            document.getElementById('cfgOrg').value = azureConfig.org || '';
+            document.getElementById('cfgProject').value = azureConfig.project || '';
+            document.getElementById('cfgPat').value = azureConfig.pat || '';
+            document.getElementById('cfgPlannedField').value = azureConfig.plannedField || 'Microsoft.VSTS.Scheduling.Effort';
+            document.getElementById('cfgActualField').value = azureConfig.actualField || 'Microsoft.VSTS.Scheduling.CompletedWork';
+            document.getElementById('cfgProjectBudget').value = projectTotalHours;
+
+            document.getElementById('globalBackdrop').classList.remove('hidden');
+            document.getElementById('apiConfigModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('apiConfigModal').classList.add('hidden');
+            if (!activeMemberDrawerUser && !editingWorkItemId) {
+                document.getElementById('globalBackdrop').classList.add('hidden');
+            }
+        }
+
+        function saveAndConnectAzureApi() {
+            const org = document.getElementById('cfgOrg').value.trim();
+            const project = document.getElementById('cfgProject').value.trim();
+            const pat = document.getElementById('cfgPat').value.trim();
+            const plannedField = document.getElementById('cfgPlannedField').value.trim() || 'Microsoft.VSTS.Scheduling.Effort';
+            const actualField = document.getElementById('cfgActualField').value.trim() || 'Microsoft.VSTS.Scheduling.CompletedWork';
+            const budget = parseFloat(document.getElementById('cfgProjectBudget').value);
+
+            if (!org || !project || !pat) {
+                showToast("Preencha Organização, Projeto e Token PAT.");
+                return;
+            }
+
+            if (!isNaN(budget) && budget > 0) {
+                projectTotalHours = budget;
+                localStorage.setItem('azure_project_budget', String(budget));
+            }
+
+            azureConfig = { org, project, pat, plannedField, actualField };
+            localStorage.setItem('azure_devops_backlog_cfg', JSON.stringify(azureConfig));
+
+            updateConnectionHeaderUI();
+            closeConfigModal();
+            syncWithAzure(false);
+        }
+
+        function disconnectAzureApi() {
+            localStorage.removeItem('azure_devops_backlog_cfg');
+            azureConfig = { org: "", project: "", pat: "", plannedField: "Microsoft.VSTS.Scheduling.Effort", actualField: "Microsoft.VSTS.Scheduling.CompletedWork" };
+            backlogItems = [...demoWorkItems];
+            updateConnectionHeaderUI();
+            rebuildTeamDirectory();
+            applyFilters();
+            closeConfigModal();
+            showToast("Voltou para os dados de demonstração.");
+        }
+
+        // =========================================================================
+        // 4. AUTO-REFRESH
+        // =========================================================================
+        function startAutoRefreshLoop() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+                if (!autoRefreshEnabled) return;
+                countdownSeconds--;
+                if (countdownSeconds <= 0) {
+                    countdownSeconds = 60;
+                    syncWithAzure(true);
+                }
+                updateCountdownUI();
+            }, 1000);
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            const dot = document.getElementById('autoRefreshDot');
+            const label = document.getElementById('autoRefreshLabel');
+
+            if (autoRefreshEnabled) {
+                countdownSeconds = 60;
+                btn.classList.remove('opacity-70');
+                dot.className = "w-2 h-2 rounded-full bg-green-400 animate-pulse";
+                label.textContent = `Auto: ${countdownSeconds}s`;
+                showToast("Auto-refresh ativado (60s).");
+            } else {
+                btn.classList.add('opacity-70');
+                dot.className = "w-2 h-2 rounded-full bg-gray-400";
+                label.textContent = "Auto: OFF";
+                showToast("Auto-refresh pausado.");
+            }
+        }
+
+        function updateCountdownUI() {
+            if (autoRefreshEnabled) {
+                document.getElementById('autoRefreshLabel').textContent = `Auto: ${countdownSeconds}s`;
+            }
+        }
+
+        // =========================================================================
+        // 5. FILTROS, ORDENAÇÃO E KPIS
+        // =========================================================================
+        function applyFilters() {
+            const userVal = document.getElementById('userFilter').value;
+            const statusVal = document.getElementById('statusFilter').value;
+            const typeVal = document.getElementById('typeFilter').value;
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            filteredItems = backlogItems.filter(item => {
+                const matchUser = userVal === 'ALL' || item.user === userVal;
+                const matchStatus = statusVal === 'ALL' || item.status === statusVal;
+                const matchType = typeVal === 'ALL' || item.type === typeVal;
+                const matchSearch = !searchVal ||
+                    item.id.toString().includes(searchVal) ||
+                    item.title.toLowerCase().includes(searchVal) ||
+                    item.user.toLowerCase().includes(searchVal) ||
+                    item.area.toLowerCase().includes(searchVal);
+                return matchUser && matchStatus && matchType && matchSearch;
+            });
+
+            sortItems();
+            updateKPIs(filteredItems);
+            renderEffortBarChartSVG(filteredItems);
+            renderStatusDonutSVG(filteredItems);
+            renderMemberCards();
+            renderTable(filteredItems);
+        }
+
+        function resetFilters() {
+            document.getElementById('userFilter').value = 'ALL';
+            document.getElementById('statusFilter').value = 'ALL';
+            document.getElementById('typeFilter').value = 'ALL';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        function sortTable(key) {
+            if (sortState.key === key) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.key = key;
+                sortState.direction = 'asc';
+            }
+            ['id', 'type', 'title', 'user', 'status', 'plannedEffort', 'actualEffort'].forEach(col => {
+                const el = document.getElementById(`sort-${col}`);
+                if (el) el.textContent = col === key ? (sortState.direction === 'asc' ? '↑' : '↓') : '↕';
+            });
+            sortItems();
+            renderTable(filteredItems);
+        }
+
+        function sortItems() {
+            const { key, direction } = sortState;
+            const mult = direction === 'asc' ? 1 : -1;
+            filteredItems.sort((a, b) => {
+                if (typeof a[key] === 'number') return (a[key] - b[key]) * mult;
+                return a[key].toString().localeCompare(b[key].toString()) * mult;
+            });
+        }
+
+        function toggleProjectBudgetEdit() {
+            const display = document.getElementById('projectBudgetDisplay');
+            const editor = document.getElementById('projectBudgetEditor');
+            const input = document.getElementById('projectBudgetInput');
+
+            if (editor.classList.contains('hidden')) {
+                input.value = projectTotalHours;
+                display.classList.add('hidden');
+                editor.classList.remove('hidden');
+                input.focus();
+            } else {
+                display.classList.remove('hidden');
+                editor.classList.add('hidden');
+            }
+        }
+
+        function saveProjectBudget() {
+            const val = parseFloat(document.getElementById('projectBudgetInput').value);
+            if (!isNaN(val) && val > 0) {
+                projectTotalHours = val;
+                localStorage.setItem('azure_project_budget', String(val));
+                toggleProjectBudgetEdit();
+                updateKPIs(filteredItems);
+                showToast(`Horas totais do projeto ajustadas para ${projectTotalHours.toLocaleString('pt-BR')}h.`);
+            }
+        }
+
+        function updateKPIs(items) {
+            // KPI 1: Horas Gerais do Projeto (Todo o backlog do projeto)
+            const projectTotalUsed = backlogItems.reduce((sum, i) => sum + i.actualEffort, 0);
+            const projectRemaining = projectTotalHours - projectTotalUsed;
+            const projectUsedPct = projectTotalHours > 0 ? Math.round((projectTotalUsed / projectTotalHours) * 100) : 0;
+
+            document.getElementById('kpiProjectUsedHours').textContent = `${projectTotalUsed.toLocaleString('pt-BR')}h`;
+            document.getElementById('kpiProjectTotalHours').textContent = `/ ${projectTotalHours.toLocaleString('pt-BR')}h totais`;
+            document.getElementById('kpiProjectUsedPct').textContent = `${projectUsedPct}%`;
+
+            const remEl = document.getElementById('kpiProjectRemainingHours');
+            const barEl = document.getElementById('kpiProjectBudgetBar');
+            if (projectRemaining >= 0) {
+                remEl.textContent = `${projectRemaining.toLocaleString('pt-BR')}h`;
+                remEl.className = "text-azure-text";
+                barEl.className = "bg-azure-dark h-1.5 rounded-full transition-all duration-500";
+            } else {
+                remEl.textContent = `${Math.abs(projectRemaining).toLocaleString('pt-BR')}h excedidas`;
+                remEl.className = "text-azure-danger";
+                barEl.className = "bg-azure-danger h-1.5 rounded-full transition-all duration-500";
+            }
+            barEl.style.width = `${Math.min(100, projectUsedPct)}%`;
+
+            // KPIs 2, 3 e 4: Escopo filtrado
+            const totalItems = items.length;
+            const plannedTotal = items.reduce((sum, i) => sum + i.plannedEffort, 0);
+            const actualTotal = items.reduce((sum, i) => sum + i.actualEffort, 0);
+            const doneCount = items.filter(i => i.status === 'DONEE').length;
+            const waitingCount = items.filter(i => i.status === 'WATING' || i.status === 'WAITING FOR INTEGRATION').length;
+
+            const completionRate = totalItems > 0 ? ((doneCount / totalItems) * 100).toFixed(1) : "0.0";
+            const effortRatio = plannedTotal > 0 ? Math.round((actualTotal / plannedTotal) * 100) : 0;
+            const variance = plannedTotal - actualTotal;
+
+            document.getElementById('kpiPlannedEffort').textContent = `${plannedTotal}h`;
+            document.getElementById('kpiTotalItemsBadge').textContent = `em ${totalItems} ${totalItems === 1 ? 'item' : 'itens'}`;
+
+            const typeCounts = ["Epic", "Feature", "User Story", "Task", "Bug"].map(t => ({
+                type: t,
+                count: items.filter(i => i.type === t).length
+            })).filter(x => x.count > 0);
+
+            document.getElementById('kpiTypesBreakdown').innerHTML = typeCounts.length > 0
+                ? typeCounts.map(tc => {
+                    const st = typeStyles[tc.type];
+                    return `<span class="px-1.5 py-0.5 rounded font-medium border ${st.bg} ${st.text} ${st.border}">${tc.count} ${tc.type}${tc.count > 1 && tc.type !== 'User Story' ? 's' : ''}</span>`;
+                }).join('')
+                : `<span class="text-azure-textMuted">Nenhum item</span>`;
+
+            document.getElementById('kpiActualEffort').textContent = `${actualTotal}h`;
+            document.getElementById('kpiEffortRatioBadge').textContent = `${effortRatio}% do esforço`;
+
+            const varianceEl = document.getElementById('kpiEffortVariance');
+            if (variance >= 0) {
+                varianceEl.textContent = `${variance}h restantes`;
+                varianceEl.className = "font-semibold text-azure-text";
+            } else {
+                varianceEl.textContent = `+${Math.abs(variance)}h acima`;
+                varianceEl.className = "font-semibold text-azure-warning";
+            }
+            document.getElementById('kpiEffortBurnBar').style.width = `${Math.min(100, effortRatio)}%`;
+
+            document.getElementById('kpiCompletionRate').textContent = `${completionRate.replace('.', ',')}%`;
+            document.getElementById('kpiCompletedFraction').textContent = `${doneCount} / ${totalItems} DONEE`;
+            document.getElementById('kpiCompletionBar').style.width = `${completionRate}%`;
+
+            const waitingEl = document.getElementById('kpiWaitingWarning');
+            waitingEl.innerHTML = waitingCount > 0
+                ? `<span class="text-azure-warning font-semibold">${waitingCount} aguardando</span>`
+                : `<span class="text-azure-success font-medium">Sem pendências</span>`;
+        }
+
+        // =========================================================================
+        // 6. GRÁFICOS SVG NATIVOS (100% CONFIÁVEIS E INTERATIVOS)
+        // =========================================================================
+        function renderEffortBarChartSVG(items) {
+            const container = document.getElementById('effortBarChartContainer');
+            const selectedUser = document.getElementById('userFilter').value;
+            const users = selectedUser === 'ALL' ? Object.keys(teamMembers) : [selectedUser];
+
+            if (users.length === 0) {
+                container.innerHTML = `<div class="h-60 flex items-center justify-center text-xs text-azure-textMuted">Sem dados para exibir no gráfico.</div>`;
+                return;
+            }
+
+            const series = users.map(u => {
+                const uItems = items.filter(i => i.user === u);
+                return {
+                    user: u,
+                    shortName: u.split(' ')[0] + (u.split(' ')[1] ? ' ' + u.split(' ')[1][0] + '.' : ''),
+                    planned: uItems.reduce((s, i) => s + i.plannedEffort, 0),
+                    actual: uItems.reduce((s, i) => s + i.actualEffort, 0)
+                };
+            });
+
+            const rawMax = Math.max(10, ...series.map(s => Math.max(s.planned, s.actual)));
+            const step = Math.ceil(rawMax / 5 / 10) * 10 || 10;
+            const yMax = step * 5;
+
+            const svgW = Math.max(640, users.length * 105);
+            const svgH = 270;
+            const padL = 46, padR = 20, padT = 20, padB = 46;
+            const plotW = svgW - padL - padR;
+            const plotH = svgH - padT - padB;
+
+            // Linhas de grade horizontais
+            let gridLines = '';
+            for (let i = 0; i <= 5; i++) {
+                const val = step * i;
+                const y = padT + plotH - (val / yMax) * plotH;
+                gridLines += `
+                    <line x1="${padL}" y1="${y}" x2="${svgW - padR}" y2="${y}" stroke="#EDEBE9" stroke-width="1" />
+                    <text x="${padL - 8}" y="${y + 4}" text-anchor="end" fill="#605E5C" font-size="11">${val}h</text>
+                `;
+            }
+
+            // Grupos de barras por usuário
+            const slotW = plotW / series.length;
+            const barW = Math.min(28, slotW * 0.28);
+            let barsSvg = '';
+
+            series.forEach((s, idx) => {
+                const centerX = padL + slotW * idx + slotW / 2;
+                const plannedH = (s.planned / yMax) * plotH;
+                const actualH = (s.actual / yMax) * plotH;
+                const yPlanned = padT + plotH - plannedH;
+                const yActual = padT + plotH - actualH;
+
+                barsSvg += `
+                    <g class="cursor-pointer group" onclick="openMemberDrawer('${s.user.replace(/'/g, "\\'")}')">
+                        <rect x="${centerX - slotW * 0.44}" y="${padT}" width="${slotW * 0.88}" height="${plotH}" fill="transparent" class="group-hover:fill-[#EFF6FC]/60 transition-colors" rx="4" />
+                        
+                        <!-- Barra Esforço Planejado -->
+                        <rect x="${centerX - barW - 2}" y="${yPlanned}" width="${barW}" height="${Math.max(0, plannedH)}" fill="#0078D4" rx="3">
+                            <title>${s.user} — Esforço Planejado: ${s.planned}h</title>
+                        </rect>
+                        ${s.planned > 0 ? `<text x="${centerX - barW / 2 - 2}" y="${yPlanned - 5}" text-anchor="middle" fill="#0078D4" font-size="10" font-weight="600">${s.planned}h</text>` : ''}
+
+                        <!-- Barra Esforço Real -->
+                        <rect x="${centerX + 2}" y="${yActual}" width="${barW}" height="${Math.max(0, actualH)}" fill="#008272" rx="3">
+                            <title>${s.user} — Esforço Real: ${s.actual}h</title>
+                        </rect>
+                        ${s.actual > 0 ? `<text x="${centerX + barW / 2 + 2}" y="${yActual - 5}" text-anchor="middle" fill="#008272" font-size="10" font-weight="600">${s.actual}h</text>` : ''}
+
+                        <!-- Nome do Colaborador no Eixo X -->
+                        <text x="${centerX}" y="${svgH - 22}" text-anchor="middle" fill="#323130" font-size="11" font-weight="600" class="group-hover:fill-[#0078D4]">${s.shortName}</text>
+                        <text x="${centerX}" y="${svgH - 8}" text-anchor="middle" fill="#605E5C" font-size="9">Ver itens</text>
+                    </g>
+                `;
+            });
+
+            container.innerHTML = `
+                <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-[270px] select-none">
+                    ${gridLines}
+                    <line x1="${padL}" y1="${padT + plotH}" x2="${svgW - padR}" y2="${padT + plotH}" stroke="#D2D0CE" stroke-width="1.2" />
+                    ${barsSvg}
+                </svg>
+            `;
+        }
+
+        function renderStatusDonutSVG(items) {
+            const container = document.getElementById('statusDonutContainer');
+            const total = items.length;
+            const counts = STATUS_LIST.map(st => ({
+                status: st,
+                count: items.filter(i => i.status === st).length,
+                color: statusStyles[st].hex
+            }));
+
+            const size = 190;
+            const cx = size / 2, cy = size / 2;
+            const radius = 72;
+            const strokeW = 22;
+            const circumference = 2 * Math.PI * radius;
+
+            let offset = 0;
+            let segmentsSvg = '';
+
+            if (total === 0) {
+                segmentsSvg = `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#EDEBE9" stroke-width="${strokeW}" />`;
+            } else {
+                counts.forEach(c => {
+                    if (c.count === 0) return;
+                    const dash = (c.count / total) * circumference;
+                    const gap = circumference - dash;
+                    segmentsSvg += `
+                        <circle cx="${cx}" cy="${cy}" r="${radius}"
+                                fill="none"
+                                stroke="${c.color}"
+                                stroke-width="${strokeW}"
+                                stroke-dasharray="${dash} ${gap}"
+                                stroke-dashoffset="${-offset}"
+                                transform="rotate(-90 ${cx} ${cy})"
+                                class="cursor-pointer hover:opacity-80 transition-opacity"
+                                onclick="toggleStatusFilter('${c.status}')">
+                            <title>${c.status}: ${c.count} itens (${Math.round((c.count / total) * 100)}%)</title>
+                        </circle>
+                    `;
+                    offset += dash;
+                });
+            }
+
+            container.innerHTML = `
+                <div class="relative inline-flex items-center justify-center">
+                    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                        ${segmentsSvg}
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-2xl font-bold text-azure-text">${total}</span>
+                        <span class="text-[11px] uppercase tracking-wider text-azure-textMuted font-semibold">Itens</span>
+                    </div>
+                </div>
+            `;
+
+            const legendGrid = document.getElementById('statusLegendGrid');
+            legendGrid.innerHTML = counts.map(c => {
+                const style = statusStyles[c.status];
+                const pct = total > 0 ? Math.round((c.count / total) * 100) : 0;
+                return `
+                    <div onclick="toggleStatusFilter('${c.status}')" class="flex items-center justify-between px-2 py-1 rounded hover:bg-azure-bg cursor-pointer transition-colors" title="${c.status}">
+                        <div class="flex items-center space-x-1.5 min-w-0">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${style.dot}"></span>
+                            <span class="text-azure-text font-medium truncate text-[11px]">${c.status}</span>
+                        </div>
+                        <span class="font-semibold text-azure-textMuted ml-1 shrink-0">${c.count} <span class="text-[10px]">(${pct}%)</span></span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleStatusFilter(status) {
+            const el = document.getElementById('statusFilter');
+            el.value = el.value === status ? 'ALL' : status;
+            applyFilters();
+        }
+
+        // =========================================================================
+        // 7. VISÃO RÁPIDA POR MEMBRO DA EQUIPE
+        // =========================================================================
+        function renderMemberCards() {
+            const container = document.getElementById('memberCardsGrid');
+            const selectedUserFilter = document.getElementById('userFilter').value;
+            const users = Object.keys(teamMembers);
+
+            container.innerHTML = users.map(user => {
+                const meta = teamMembers[user];
+                const userItems = backlogItems.filter(i => i.user === user);
+                const totalItems = userItems.length;
+                const completedItems = userItems.filter(i => i.status === 'DONEE').length;
+                const plannedH = userItems.reduce((s, i) => s + i.plannedEffort, 0);
+                const actualH = userItems.reduce((s, i) => s + i.actualEffort, 0);
+                const completionPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                const isHighlighted = selectedUserFilter === user || activeMemberDrawerUser === user;
+
+                return `
+                    <div onclick="openMemberDrawer('${user.replace(/'/g, "\\'")}')" 
+                         class="bg-white rounded border ${isHighlighted ? 'border-azure-primary ring-2 ring-azure-primary/20 bg-azure-light/25' : 'border-azure-border hover:border-azure-primary'} shadow-fluent hover:shadow-fluent-hover p-3.5 cursor-pointer transition-all flex flex-col justify-between group">
+                        <div>
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0 shadow-sm" style="background-color: ${meta.color}">
+                                    ${meta.initials}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-sm font-semibold text-azure-text group-hover:text-azure-primary truncate transition-colors">${user}</div>
+                                    <div class="text-[11px] text-azure-textMuted truncate">${meta.role}</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-2.5 border-t border-azure-border/70 space-y-1.5 text-xs">
+                                <div class="flex justify-between">
+                                    <span class="text-azure-textMuted">Atividades:</span>
+                                    <span class="font-semibold text-azure-text">${totalItems} itens (${completedItems} DONEE)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-azure-textMuted">Esforço Plan.:</span>
+                                    <span class="font-mono font-medium text-azure-primary">${plannedH}h</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-azure-textMuted">Esforço Real:</span>
+                                    <span class="font-mono font-semibold text-[#008272]">${actualH}h</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 pt-2 border-t border-azure-border/50">
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-azure-textMuted">Conclusão (DONEE)</span>
+                                <span class="font-bold text-azure-text">${completionPct}%</span>
+                            </div>
+                            <div class="w-full bg-azure-bg rounded-full h-1.5 overflow-hidden">
+                                <div class="h-1.5 rounded-full transition-all duration-300" style="width: ${completionPct}%; background-color: ${meta.color}"></div>
+                            </div>
+                            <div class="mt-2 text-[11px] text-azure-primary font-medium flex items-center justify-end space-x-1 opacity-80 group-hover:opacity-100">
+                                <span>Ver atividades</span>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =========================================================================
+        // 8. DRAWERS LATERAIS E TABELA
+        // =========================================================================
+        function openMemberDrawer(userName) {
+            activeMemberDrawerUser = userName;
+            populateMemberDrawer(userName);
+            renderMemberCards();
+
+            document.getElementById('globalBackdrop').classList.remove('hidden');
+            requestAnimationFrame(() => {
+                document.getElementById('memberDrawer').classList.remove('translate-x-full');
+            });
+        }
+
+        function populateMemberDrawer(userName) {
+            const meta = teamMembers[userName] || { initials: "??", color: "#0078D4", role: "Membro" };
+            const userItems = backlogItems.filter(i => i.user === userName);
+
+            const plannedH = userItems.reduce((s, i) => s + i.plannedEffort, 0);
+            const actualH = userItems.reduce((s, i) => s + i.actualEffort, 0);
+            const doneCount = userItems.filter(i => i.status === 'DONEE').length;
+            const rate = userItems.length > 0 ? Math.round((doneCount / userItems.length) * 100) : 0;
+
+            document.getElementById('memberDrawerHeader').innerHTML = `
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm" style="background-color: ${meta.color}">
+                    ${meta.initials}
+                </div>
+                <div>
+                    <h3 class="text-base font-semibold text-azure-text">Atividades Vinculadas a ${userName}</h3>
+                    <p class="text-xs text-azure-textMuted">${meta.role} • Backlog Geral</p>
+                </div>
+            `;
+
+            document.getElementById('memberDrawerStats').innerHTML = `
+                <div class="bg-white p-2.5 rounded border border-azure-border">
+                    <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Total Atividades</div>
+                    <div class="text-base font-bold text-azure-text mt-0.5">${userItems.length} itens</div>
+                </div>
+                <div class="bg-white p-2.5 rounded border border-azure-border">
+                    <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Esforço Planejado</div>
+                    <div class="text-base font-bold text-azure-primary mt-0.5">${plannedH}h</div>
+                </div>
+                <div class="bg-white p-2.5 rounded border border-azure-border">
+                    <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Esforço Real</div>
+                    <div class="text-base font-bold text-[#008272] mt-0.5">${actualH}h</div>
+                </div>
+                <div class="bg-white p-2.5 rounded border border-azure-border">
+                    <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Taxa DONEE</div>
+                    <div class="text-base font-bold text-azure-success mt-0.5">${rate}%</div>
+                </div>
+            `;
+
+            const listEl = document.getElementById('memberDrawerList');
+            listEl.innerHTML = userItems.length === 0
+                ? `<div class="text-center py-10 text-sm text-azure-textMuted">Nenhuma atividade vinculada a este usuário.</div>`
+                : userItems.map(item => {
+                    const tStyle = typeStyles[item.type] || typeStyles["Task"];
+                    const sStyle = statusStyles[item.status] || statusStyles["TODO"];
+                    const pct = item.plannedEffort > 0 ? Math.min(100, Math.round((item.actualEffort / item.plannedEffort) * 100)) : 0;
+
+                    return `
+                        <div onclick="openWorkItemBlade(${item.id})" class="bg-white border border-azure-border hover:border-azure-primary rounded p-3.5 shadow-sm hover:shadow-fluent cursor-pointer transition-all group">
+                            <div class="flex items-center justify-between gap-2 mb-1.5">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-mono text-xs font-bold text-azure-textMuted group-hover:text-azure-primary">#${item.id}</span>
+                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-medium border ${tStyle.bg} ${tStyle.text} ${tStyle.border}">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${tStyle.icon}"/></svg>
+                                        <span>${item.type}</span>
+                                    </span>
+                                </div>
+                                <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${sStyle.bg} ${sStyle.text}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${sStyle.dot}"></span>
+                                    <span>${item.status}</span>
+                                </span>
+                            </div>
+
+                            <div class="text-sm font-medium text-azure-text group-hover:text-azure-primary group-hover:underline transition-colors mb-2.5">
+                                ${item.title}
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-azure-border/60 text-xs">
+                                <div class="flex items-center space-x-4">
+                                    <span>Esforço: <strong class="font-mono text-azure-text">${item.plannedEffort}h</strong></span>
+                                    <span>Esforço Real: <strong class="font-mono text-[#008272]">${item.actualEffort}h</strong></span>
+                                </div>
+                                <div class="flex items-center space-x-2 w-28">
+                                    <div class="flex-1 bg-azure-bg rounded-full h-1.5">
+                                        <div class="h-1.5 rounded-full bg-azure-primary" style="width: ${pct}%"></div>
+                                    </div>
+                                    <span class="text-[11px] font-semibold text-azure-textMuted">${pct}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            document.getElementById('memberFilterApplyBtn').onclick = () => {
+                document.getElementById('userFilter').value = userName;
+                closeMemberDrawer();
+                applyFilters();
+                showToast(`Dashboard filtrado por ${userName}.`);
+            };
+        }
+
+        function closeMemberDrawer() {
+            document.getElementById('memberDrawer').classList.add('translate-x-full');
+            activeMemberDrawerUser = null;
+            renderMemberCards();
+            if (!editingWorkItemId) {
+                setTimeout(() => document.getElementById('globalBackdrop').classList.add('hidden'), 250);
+            }
+        }
+
+        function renderTable(items) {
+            const tbody = document.getElementById('workItemsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            document.getElementById('tableCountBadge').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
+
+            if (items.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = items.map(item => {
+                const tStyle = typeStyles[item.type] || typeStyles["Task"];
+                const sStyle = statusStyles[item.status] || statusStyles["TODO"];
+                const uMeta = teamMembers[item.user] || { initials: "??", color: "#605E5C" };
+                const execPct = item.plannedEffort > 0 ? Math.min(100, Math.round((item.actualEffort / item.plannedEffort) * 100)) : 0;
+                const isOverEffort = item.actualEffort > item.plannedEffort;
+
+                return `
+                    <tr onclick="openWorkItemBlade(${item.id})" class="hover:bg-[#EFF6FC]/60 transition-colors cursor-pointer group">
+                        <td class="py-3 px-4 font-mono text-xs font-semibold text-azure-textMuted group-hover:text-azure-primary">#${item.id}</td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded text-xs font-medium border ${tStyle.bg} ${tStyle.text} ${tStyle.border}">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${tStyle.icon}"/></svg>
+                                <span>${item.type}</span>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-azure-text group-hover:text-azure-primary group-hover:underline transition-colors line-clamp-1">${item.title}</div>
+                            <div class="text-[11px] text-azure-textMuted mt-0.5 font-mono">${item.area}</div>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0" style="background-color: ${uMeta.color}">${uMeta.initials}</span>
+                                <span class="text-xs font-medium text-azure-text">${item.user}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${sStyle.bg} ${sStyle.text}">
+                                <span class="w-1.5 h-1.5 rounded-full ${sStyle.dot}"></span>
+                                <span>${item.status}</span>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right font-mono text-xs text-azure-textMuted whitespace-nowrap">${item.plannedEffort}h</td>
+                        <td class="py-3 px-4 text-right font-mono text-xs font-semibold ${isOverEffort ? 'text-azure-warning' : 'text-[#008272]'} whitespace-nowrap">${item.actualEffort}h</td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <div class="flex-1 bg-azure-bg rounded-full h-1.5 overflow-hidden">
+                                    <div class="h-1.5 rounded-full ${item.status === 'WATING' ? 'bg-azure-warning' : (item.status === 'DONEE' ? 'bg-azure-success' : 'bg-azure-primary')}" style="width: ${execPct}%"></div>
+                                </div>
+                                <span class="text-[11px] font-medium text-azure-textMuted w-8 text-right">${execPct}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <button onclick="event.stopPropagation(); openWorkItemBlade(${item.id})" class="px-2.5 py-1 text-xs font-medium text-azure-primary hover:bg-azure-light rounded transition-colors">Editar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // =========================================================================
+        // 9. BLADE DE EDIÇÃO DO WORK ITEM (LOCAL + PATCH NA API DO AZURE)
+        // =========================================================================
+        function openWorkItemBlade(id) {
+            const item = backlogItems.find(i => i.id === id);
+            if (!item) return;
+
+            editingWorkItemId = id;
+            const tStyle = typeStyles[item.type] || typeStyles["Task"];
+
+            document.getElementById('bladeHeaderBadge').innerHTML = `
+                <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded text-xs font-semibold border ${tStyle.bg} ${tStyle.text} ${tStyle.border}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${tStyle.icon}"/></svg>
+                    <span>${item.type} #${item.id}</span>
+                </span>
+                <span class="text-xs text-azure-textMuted font-mono">${item.area}</span>
+            `;
+
+            document.getElementById('bladeContent').innerHTML = `
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-azure-textMuted mb-1">Título do Item</label>
+                    <h3 class="text-base font-semibold text-azure-text leading-snug">${item.title}</h3>
+                </div>
+                <div class="p-3.5 bg-[#FAF9F8] rounded border border-azure-border text-xs text-azure-text leading-relaxed">
+                    <span class="font-semibold block mb-1 text-azure-textMuted uppercase tracking-wider text-[10px]">Descrição</span>
+                    ${item.description}
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="editUser" class="block text-xs font-semibold text-azure-text mb-1">Responsável (Assigned To)</label>
+                        <select id="editUser" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm focus:outline-none focus:border-azure-primary">
+                            ${Object.keys(teamMembers).map(u => `<option value="${u}" ${u === item.user ? 'selected' : ''}>${u}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="editStatus" class="block text-xs font-semibold text-azure-text mb-1">Status (State)</label>
+                        <select id="editStatus" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm focus:outline-none focus:border-azure-primary">
+                            ${STATUS_LIST.map(st => `<option value="${st}" ${item.status === st ? 'selected' : ''}>${st}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="border-t border-azure-border pt-4">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted mb-3">Horas e Esforço</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="editPlanned" class="block text-xs font-semibold text-azure-text mb-1">Esforço Planejado (h)</label>
+                            <input type="number" id="editPlanned" min="0" max="500" step="1" value="${item.plannedEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
+                        </div>
+                        <div>
+                            <label for="editActual" class="block text-xs font-semibold text-azure-text mb-1">Esforço Real (h)</label>
+                            <input type="number" id="editActual" min="0" max="500" step="1" value="${item.actualEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('globalBackdrop').classList.remove('hidden');
+            requestAnimationFrame(() => {
+                document.getElementById('workItemBlade').classList.remove('translate-x-full');
+            });
+        }
+
+        function closeWorkItemBlade() {
+            document.getElementById('workItemBlade').classList.add('translate-x-full');
+            editingWorkItemId = null;
+            if (!activeMemberDrawerUser) {
+                setTimeout(() => document.getElementById('globalBackdrop').classList.add('hidden'), 250);
+            }
+        }
+
+        function closeAllDrawers() {
+            closeWorkItemBlade();
+            closeMemberDrawer();
+            setTimeout(() => document.getElementById('globalBackdrop').classList.add('hidden'), 250);
+        }
+
+        async function saveWorkItemChanges() {
+            if (!editingWorkItemId) return;
+            const idx = backlogItems.findIndex(i => i.id === editingWorkItemId);
+            if (idx === -1) return;
+
+            const newUser = document.getElementById('editUser').value;
+            const newStatus = document.getElementById('editStatus').value;
+            const newPlanned = Math.max(0, parseFloat(document.getElementById('editPlanned').value) || 0);
+            const newActual = Math.max(0, parseFloat(document.getElementById('editActual').value) || 0);
+
+            // Se conectado na API real do Azure DevOps, envia PATCH para atualizar lá também
+            if (isAzureConfigured()) {
+                try {
+                    const { org, project, pat, plannedField, actualField } = azureConfig;
+                    const patchDoc = [
+                        { op: "add", path: "/fields/System.State", value: newStatus },
+                        { op: "add", path: `/fields/${plannedField}`, value: newPlanned },
+                        { op: "add", path: `/fields/${actualField}`, value: newActual }
+                    ];
+                    if (newUser !== 'Não Atribuído') {
+                        patchDoc.push({ op: "add", path: "/fields/System.AssignedTo", value: newUser });
+                    }
+
+                    const resp = await fetch(`https://dev.azure.com/${encodeURIComponent(org)}/${encodeURIComponent(project)}/_apis/wit/workitems/${editingWorkItemId}?api-version=7.1`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(':' + pat),
+                            'Content-Type': 'application/json-patch+json'
+                        },
+                        body: JSON.stringify(patchDoc)
+                    });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                } catch (err) {
+                    showToast(`Aviso: erro ao gravar no Azure (${err.message}).`);
+                    return;
+                }
+            }
+
+            backlogItems[idx] = {
+                ...backlogItems[idx],
+                user: newUser,
+                status: newStatus,
+                plannedEffort: newPlanned,
+                actualEffort: newActual
+            };
+
+            const savedId = editingWorkItemId;
+            closeWorkItemBlade();
+            if (activeMemberDrawerUser) populateMemberDrawer(activeMemberDrawerUser);
+            applyFilters();
+            showToast(`Work Item #${savedId} atualizado!`);
+        }
+
+        // =========================================================================
+        // 10. EXPORTAÇÃO CSV E TOAST
+        // =========================================================================
+        function exportToCSV() {
+            if (filteredItems.length === 0) {
+                showToast("Nenhum item para exportar.");
+                return;
+            }
+            const headers = ["ID", "Tipo", "Titulo", "Responsavel", "Status", "Esforco_Planejado_h", "Esforco_Real_h"];
+            const rows = filteredItems.map(i => [
+                i.id, `"${i.type}"`, `"${i.title.replace(/"/g, '""')}"`, `"${i.user}"`, `"${i.status}"`, i.plannedEffort, i.actualEffort
+            ]);
+            const csv = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `azure_backlog_analytics_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast(`Exportados ${filteredItems.length} itens para CSV.`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3200);
+        }
+    </script>
+</body>
+</html>
