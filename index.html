@@ -67,7 +67,7 @@
     <header class="bg-azure-primary text-white h-12 px-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
         <div class="flex items-center space-x-3">
             <!-- App Launcher -->
-            <button class="p-1.5 hover:bg-azure-hover rounded transition-colors" title="Azure Static Web Apps">
+            <button class="p-1.5 hover:bg-azure-hover rounded transition-colors" title="Azure DevOps Analytics">
                 <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
                     <path d="M2 2h3.5v3.5H2V2zm6.25 0h3.5v3.5h-3.5V2zM14.5 2H18v3.5h-3.5V2zM2 8.25h3.5v3.5H2v-3.5zm6.25 0h3.5v3.5h-3.5v-3.5zm6.25 0H18v3.5h-3.5v-3.5zM2 14.5h3.5V18H2v-3.5zm6.25 0h3.5V18h-3.5v-3.5zm6.25 0H18V18h-3.5v-3.5z"/>
                 </svg>
@@ -89,30 +89,26 @@
                 <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 <span id="breadcrumbProject" class="hover:underline cursor-pointer">Projeto</span>
                 <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                <span class="font-semibold text-white bg-white/15 px-2 py-0.5 rounded">Backlog Geral</span>
+                <span id="breadcrumbEpic" class="font-semibold text-white bg-white/15 px-2 py-0.5 rounded truncate max-w-[280px]">04 - DESENVOLVIMENTO TORRE DE IA SENAI</span>
             </nav>
         </div>
 
         <!-- Direita: Status Conexão API, Auto-Refresh & Exportação -->
         <div class="flex items-center space-x-2 sm:space-x-3">
-            <!-- Botão Conectar Azure API -->
             <button onclick="openConfigModal()" id="apiStatusBtn" class="flex items-center space-x-1.5 text-xs bg-azure-dark/80 hover:bg-azure-dark px-2.5 py-1.5 rounded border border-white/20 transition-colors" title="Configurar conexão real com a REST API do Azure DevOps">
                 <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
                 <span id="apiStatusText" class="font-medium">Modo Demo (Conectar Azure)</span>
             </button>
 
-            <!-- Auto-Refresh Toggle -->
             <button id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="hidden md:flex items-center space-x-1.5 text-xs bg-azure-dark/60 hover:bg-azure-dark px-2.5 py-1.5 rounded border border-white/15 transition-colors" title="Alternar atualização automática">
                 <span id="autoRefreshDot" class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
                 <span id="autoRefreshLabel">Auto: 60s</span>
             </button>
 
-            <!-- Botão Refresh Manual -->
             <button onclick="syncWithAzure(false)" class="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded transition-colors" title="Sincronizar agora">
                 <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </button>
 
-            <!-- Botão Exportar CSV -->
             <button onclick="exportToCSV()" class="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-medium px-2.5 py-1.5 rounded transition-colors" title="Exportar CSV">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span class="hidden sm:inline">CSV</span>
@@ -129,18 +125,17 @@
                         <h1 class="text-xl sm:text-2xl font-semibold text-azure-text tracking-tight">
                             Backlog Analytics — Esforço e Atividades por Usuário
                         </h1>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-azure-light text-azure-primary border border-azure-primary/20">
-                            Sem Vínculo de Sprint
+                        <span id="epicFilterBadge" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-[#FFF4CE] text-[#986F0B] border border-[#F2C811]/60">
+                            Épico: 04 - DESENVOLVIMENTO TORRE DE IA SENAI
                         </span>
                     </div>
                     <p class="text-xs sm:text-sm text-azure-textMuted mt-0.5">
-                        Acompanhamento geral de horas do projeto, Esforço planejado vs. Esforço Real e status do backlog.
+                        Acompanhamento exclusivo do Épico de desenvolvimento: Esforço planejado vs. Esforço Real e status das entregas.
                     </p>
                 </div>
 
                 <!-- Filtros -->
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <!-- Filtro: Usuário -->
                     <div class="flex flex-col">
                         <label for="userFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Usuário (Assigned To)</label>
                         <div class="relative">
@@ -151,7 +146,6 @@
                         </div>
                     </div>
 
-                    <!-- Filtro: Status -->
                     <div class="flex flex-col">
                         <label for="statusFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Status (State)</label>
                         <div class="relative">
@@ -167,13 +161,11 @@
                         </div>
                     </div>
 
-                    <!-- Filtro: Tipo de Work Item -->
                     <div class="flex flex-col">
                         <label for="typeFilter" class="text-[11px] font-semibold uppercase tracking-wider text-azure-textMuted mb-0.5">Tipo de Item</label>
                         <div class="relative">
                             <select id="typeFilter" onchange="applyFilters()" class="appearance-none bg-white border border-azure-borderDark hover:border-azure-primary text-azure-text text-sm rounded px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-azure-primary/30 focus:border-azure-primary transition-colors cursor-pointer">
                                 <option value="ALL">Todos os Tipos</option>
-                                <option value="Epic">Epic</option>
                                 <option value="Feature">Feature</option>
                                 <option value="User Story">User Story</option>
                                 <option value="Task">Task</option>
@@ -183,7 +175,6 @@
                         </div>
                     </div>
 
-                    <!-- Botão Limpar -->
                     <div class="flex flex-col justify-end self-end">
                         <button onclick="resetFilters()" class="px-3 py-1.5 text-sm text-azure-primary hover:bg-azure-light border border-transparent hover:border-azure-primary/20 rounded font-medium transition-colors flex items-center space-x-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -239,12 +230,12 @@
                 </div>
             </div>
 
-            <!-- KPI 2: Esforço Planejado (Effort) -->
+            <!-- KPI 2: Esforço Planejado (Remaining Work) -->
             <div class="bg-white rounded border border-azure-border shadow-fluent hover:shadow-fluent-hover transition-shadow p-4 flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-1 h-full bg-azure-primary"></div>
                 <div class="flex items-start justify-between">
                     <div>
-                        <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Esforço Planejado (Backlog)</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-azure-textMuted">Esforço Planejado (Épico)</span>
                         <div class="mt-2 flex items-baseline space-x-2">
                             <span id="kpiPlannedEffort" class="text-2xl sm:text-3xl font-bold text-azure-text">0h</span>
                             <span id="kpiTotalItemsBadge" class="text-xs font-medium text-azure-textMuted">em 0 itens</span>
@@ -311,10 +302,9 @@
 
         </section>
 
-        <!-- Seção 2: Gráficos Interativos (SVG Nativo — Zero Dependência Externa) -->
+        <!-- Seção 2: Gráficos Interativos (SVG Nativo) -->
         <section aria-label="Gráficos Analíticos do Backlog" class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
-            <!-- Gráfico de Barras Agrupadas: Esforço Planejado vs. Esforço Real por Usuário -->
             <div class="lg:col-span-8 bg-white rounded border border-azure-border shadow-fluent p-4 sm:p-5 flex flex-col justify-between">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                     <div>
@@ -332,19 +322,15 @@
                         </span>
                     </div>
                 </div>
-                <!-- Container do Gráfico de Barras SVG -->
                 <div id="effortBarChartContainer" class="w-full overflow-x-auto"></div>
             </div>
 
-            <!-- Gráfico Donut: Distribuição do Backlog por Status -->
             <div class="lg:col-span-4 bg-white rounded border border-azure-border shadow-fluent p-4 sm:p-5 flex flex-col justify-between">
                 <div class="mb-3">
-                    <h2 class="text-base font-semibold text-azure-text">Status das Atividades (Backlog)</h2>
+                    <h2 class="text-base font-semibold text-azure-text">Status das Atividades (Épico)</h2>
                     <p class="text-xs text-azure-textMuted">Clique em um status para filtrar o painel</p>
                 </div>
-                <!-- Container do Gráfico Donut SVG -->
                 <div id="statusDonutContainer" class="flex items-center justify-center my-2"></div>
-                <!-- Legenda Interativa -->
                 <div id="statusLegendGrid" class="mt-3 pt-3 border-t border-azure-border grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs"></div>
             </div>
 
@@ -418,7 +404,7 @@
             <div id="emptyState" class="hidden py-12 px-4 text-center">
                 <svg class="w-12 h-12 text-azure-neutral mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <h3 class="text-base font-semibold text-azure-text">Nenhum Work Item encontrado</h3>
-                <p class="text-xs text-azure-textMuted mt-1">Tente ajustar os filtros acima para visualizar os itens do backlog.</p>
+                <p class="text-xs text-azure-textMuted mt-1">Tente ajustar os filtros acima para visualizar os itens do épico.</p>
                 <button onclick="resetFilters()" class="mt-4 px-4 py-1.5 bg-azure-primary hover:bg-azure-hover text-white text-xs font-medium rounded transition-colors">
                     Limpar Filtros
                 </button>
@@ -443,18 +429,23 @@
             
             <div class="p-6 space-y-4 text-sm max-h-[80vh] overflow-y-auto">
                 <div class="p-3 bg-azure-light border border-azure-primary/20 rounded text-xs text-azure-text leading-relaxed">
-                    <strong>Pronto para Azure Static Web Apps:</strong> Preencha os dados abaixo para puxar automaticamente todos os itens do seu Backlog (Epics, Features, User Stories, Tasks e Bugs) sem vínculo de Sprint.
+                    <strong>Escopo filtrado por Épico:</strong> O painel carrega automaticamente todos os itens filhos vinculados ao Épico configurado abaixo.
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-azure-text mb-1">Organização (Organization) *</label>
-                        <input type="text" id="cfgOrg" placeholder="ex: minha-empresa" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
+                        <input type="text" id="cfgOrg" placeholder="ex: ISTEO" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-azure-text mb-1">Projeto (Project) *</label>
-                        <input type="text" id="cfgProject" placeholder="ex: MeuProjeto" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
+                        <input type="text" id="cfgProject" placeholder="ex: Torre de IA SENAI" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-azure-text mb-1">Épico Alvo (Título ou ID numérico) *</label>
+                    <input type="text" id="cfgEpicFilter" value="04 - DESENVOLVIMENTO TORRE DE IA SENAI" placeholder="ex: 04 - DESENVOLVIMENTO TORRE DE IA SENAI" class="w-full border border-azure-borderDark rounded px-3 py-2 text-xs focus:outline-none focus:border-azure-primary">
                 </div>
 
                 <div>
@@ -466,7 +457,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-azure-border">
                     <div>
                         <label class="block text-xs font-semibold text-azure-text mb-1">Campo de Esforço (API Name)</label>
-                        <input type="text" id="cfgPlannedField" value="Microsoft.VSTS.Scheduling.Effort" class="w-full border border-azure-borderDark rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-azure-primary">
+                        <input type="text" id="cfgPlannedField" value="Microsoft.VSTS.Scheduling.RemainingWork" class="w-full border border-azure-borderDark rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-azure-primary">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-azure-text mb-1">Campo de Esforço Real (API Name)</label>
@@ -547,44 +538,42 @@
 
     <script>
         // =========================================================================
-        // 1. CONFIGURAÇÕES E CONSTANTES
+        // 1. CONFIGURAÇÕES, FORMATADORES E CONSTANTES
         // =========================================================================
+        const DEFAULT_EPIC_TARGET = "04 - DESENVOLVIMENTO TORRE DE IA SENAI";
         const STATUS_LIST = ["TODO", "DOING", "WAITING FOR INTEGRATION", "WATING", "DONEE"];
         const USER_PALETTE = ["#0078D4", "#107C10", "#8764B8", "#008272", "#D83B01", "#4F6BED", "#B4009E", "#038387"];
 
-        // Configuração da API (pode ser preenchida fixo aqui ou via Modal no navegador)
+        // Arredondamento seguro contra dízimas binárias (ex: 998.3000000000001 -> "998,3")
+        function round1(num) {
+            return Math.round((Number(num) || 0) * 10) / 10;
+        }
+
+        function fmtHours(num) {
+            const val = round1(num);
+            return val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+        }
+
         let azureConfig = JSON.parse(localStorage.getItem('azure_devops_backlog_cfg') || 'null') || {
-            org: "",          // Ex: "sua-organizacao"
-            project: "",      // Ex: "seu-projeto"
-            pat: "",          // Ex: "seu-personal-access-token"
-            plannedField: "Microsoft.VSTS.Scheduling.Effort",
+            org: "",
+            project: "",
+            pat: "",
+            epicFilter: DEFAULT_EPIC_TARGET,
+            plannedField: "Microsoft.VSTS.Scheduling.RemainingWork",
             actualField: "Microsoft.VSTS.Scheduling.CompletedWork"
         };
 
+        if (!azureConfig.epicFilter) azureConfig.epicFilter = DEFAULT_EPIC_TARGET;
+
         let projectTotalHours = parseFloat(localStorage.getItem('azure_project_budget') || '1200');
 
-        // Dados Demo iniciais (usados enquanto a API real não está conectada)
+        // Dados Demo iniciais
         const demoWorkItems = [
-            { id: 2001, type: "Epic",       title: "Modernização da Plataforma Core Cloud no Microsoft Azure", user: "Mariana Silva",   status: "DOING",                   plannedEffort: 120, actualEffort: 84, area: "Backlog\\Arquitetura", description: "Iniciativa estratégica de migração dos serviços legados para arquitetura cloud-native." },
-            { id: 2002, type: "Feature",    title: "Módulo de Autenticação Unificada com Microsoft Entra ID", user: "Mariana Silva",   status: "DONEE",                   plannedEffort: 40,  actualEffort: 38, area: "Backlog\\Segurança",   description: "Implementação de SSO, MFA e políticas de acesso condicional." },
-            { id: 2003, type: "Feature",    title: "Motor de Processamento Assíncrono via Azure Service Bus", user: "Lucas Oliveira",  status: "DOING",                   plannedEffort: 56,  actualEffort: 42, area: "Backlog\\Backend",     description: "Filas e tópicos com dead-lettering para processamento resiliente." },
-            { id: 2004, type: "User Story", title: "API REST de Consulta de Saldos e Extratos Consolidados",  user: "Lucas Oliveira",  status: "DONEE",                   plannedEffort: 24,  actualEffort: 26, area: "Backlog\\Backend",     description: "Endpoints paginados com cache distribuído em Redis." },
-            { id: 2005, type: "Task",       title: "Otimizar índices e queries no Azure SQL Database",        user: "Lucas Oliveira",  status: "WAITING FOR INTEGRATION", plannedEffort: 16,  actualEffort: 15, area: "Backlog\\Database",    description: "Análise de planos de execução e criação de índices compostos." },
-            { id: 2006, type: "Bug",        title: "Falha de timeout intermitente no pool de conexões Redis", user: "Lucas Oliveira",  status: "WATING",                  plannedEffort: 12,  actualEffort: 8,  area: "Backlog\\Backend",     description: "Aguardando janela de manutenção para ajuste de parâmetros TLS." },
-            { id: 2007, type: "Feature",    title: "Novo Portal do Cliente com Design System Fluent UI",      user: "Camila Santos",   status: "DOING",                   plannedEffort: 48,  actualEffort: 34, area: "Backlog\\Frontend",    description: "Reconstrução das telas principais com foco em acessibilidade." },
-            { id: 2008, type: "User Story", title: "Tela de Gestão de Permissões e Perfis de Acesso",         user: "Camila Santos",   status: "DONEE",                   plannedEffort: 20,  actualEffort: 20, area: "Backlog\\Frontend",    description: "Interface para atribuição granular de papéis (RBAC)." },
-            { id: 2009, type: "Task",       title: "Implementar tema escuro e contraste acessível (WCAG AA)", user: "Camila Santos",   status: "WAITING FOR INTEGRATION", plannedEffort: 14,  actualEffort: 12, area: "Backlog\\Frontend",    description: "Validação de tokens de cor e navegação via teclado." },
-            { id: 2010, type: "Bug",        title: "Quebra de layout na tabela de lançamentos em telas mobile",user: "Camila Santos",  status: "TODO",                    plannedEffort: 8,   actualEffort: 0,  area: "Backlog\\Frontend",    description: "Ajustar overflow horizontal em viewports menores que 375px." },
-            { id: 2011, type: "Feature",    title: "Automação de Infraestrutura como Código (Terraform)",     user: "Rafael Costa",    status: "DONEE",                   plannedEffort: 44,  actualEffort: 42, area: "Backlog\\DevOps",      description: "Provisionamento automatizado de VNets, Key Vault e AKS." },
-            { id: 2012, type: "Task",       title: "Configurar pipelines multi-stage no Azure Pipelines",     user: "Rafael Costa",    status: "DOING",                   plannedEffort: 24,  actualEffort: 18, area: "Backlog\\DevOps",      description: "Build, testes automatizados e deploy contínuo." },
-            { id: 2013, type: "Task",       title: "Integrar Azure Key Vault com rotação automática de chaves",user: "Rafael Costa",   status: "DONEE",                   plannedEffort: 16,  actualEffort: 16, area: "Backlog\\Segurança",   description: "Eliminação de connection strings hardcoded." },
-            { id: 2014, type: "User Story", title: "Suíte de Testes E2E Automatizados para Fluxos Críticos",  user: "Beatriz Almeida", status: "DOING",                   plannedEffort: 32,  actualEffort: 22, area: "Backlog\\Qualidade",   description: "Cobertura automatizada com Playwright." },
-            { id: 2015, type: "Task",       title: "Executar testes de carga com Azure Load Testing",         user: "Beatriz Almeida", status: "WATING",                  plannedEffort: 20,  actualEffort: 6,  area: "Backlog\\Qualidade",   description: "Aguardando resolução do item #2006 antes de rodar bateria." },
-            { id: 2016, type: "Task",       title: "Homologação funcional do módulo de relatórios exportáveis",user: "Beatriz Almeida",status: "DONEE",                   plannedEffort: 16,  actualEffort: 15, area: "Backlog\\Qualidade",   description: "Validação de integridade dos arquivos CSV e PDF." },
-            { id: 2017, type: "Feature",    title: "Data Lake Analítico e Pipeline ETL no Azure Synapse",     user: "Thiago Mendes",   status: "DOING",                   plannedEffort: 52,  actualEffort: 36, area: "Backlog\\Dados",       description: "Ingestão incremental de eventos operacionais." },
-            { id: 2018, type: "User Story", title: "Modelagem dimensional de indicadores de produtividade",   user: "Thiago Mendes",   status: "WAITING FOR INTEGRATION", plannedEffort: 24,  actualEffort: 24, area: "Backlog\\Dados",       description: "Criação de views analíticas consolidadas." },
-            { id: 2019, type: "Task",       title: "Criar rotina de verificação de qualidade de dados",       user: "Thiago Mendes",   status: "TODO",                    plannedEffort: 16,  actualEffort: 0,  area: "Backlog\\Dados",       description: "Alertas automáticos para registros inconsistentes." },
-            { id: 2020, type: "User Story", title: "Governança de APIs e Rate Limiting no Azure APIM",        user: "Mariana Silva",   status: "TODO",                    plannedEffort: 22,  actualEffort: 0,  area: "Backlog\\Arquitetura", description: "Configurar políticas de throttling e cache." }
+            { id: 2002, type: "Feature",    title: "1. CONSTRUÇÃO V. 0",                                     user: "Mariana Silva",   status: "DOING",                   plannedEffort: 40, actualEffort: 38, area: "Torre de IA SENAI", description: "Construção inicial da plataforma." },
+            { id: 2003, type: "Feature",    title: "2. MODULO SOFTWARE",                                    user: "Lucas Oliveira",  status: "TODO",                    plannedEffort: 56, actualEffort: 42, area: "Torre de IA SENAI", description: "Desenvolvimento do módulo de software." },
+            { id: 2004, type: "Feature",    title: "3. MODULO INTELIGÊNCIA ARTIFICIAL",                     user: "Camila Santos",   status: "TODO",                    plannedEffort: 24, actualEffort: 26, area: "Torre de IA SENAI", description: "Pipeline e modelos de IA." },
+            { id: 2005, type: "Task",       title: "Otimizar índices e queries no Azure SQL Database",        user: "Lucas Oliveira",  status: "WAITING FOR INTEGRATION", plannedEffort: 16, actualEffort: 15, area: "Torre de IA SENAI", description: "Análise de planos de execução." },
+            { id: 2006, type: "Task",       title: "Implementar autenticação SSO com Entra ID",             user: "Mariana Silva",   status: "DONEE",                   plannedEffort: 12, actualEffort: 12, area: "Torre de IA SENAI", description: "Configuração de segurança." }
         ];
 
         let backlogItems = [...demoWorkItems];
@@ -644,6 +633,12 @@
             const text = document.getElementById('apiStatusText');
             const bOrg = document.getElementById('breadcrumbOrg');
             const bProj = document.getElementById('breadcrumbProject');
+            const bEpic = document.getElementById('breadcrumbEpic');
+            const badge = document.getElementById('epicFilterBadge');
+            const epicLabel = azureConfig.epicFilter || DEFAULT_EPIC_TARGET;
+
+            bEpic.textContent = epicLabel;
+            badge.textContent = `Épico: ${epicLabel}`;
 
             if (isAzureConfigured()) {
                 dot.className = "w-2 h-2 rounded-full bg-green-400 animate-pulse";
@@ -653,8 +648,8 @@
             } else {
                 dot.className = "w-2 h-2 rounded-full bg-amber-400";
                 text.textContent = "Modo Demo (Conectar Azure)";
-                bOrg.textContent = "ContosoCloud-BR";
-                bProj.textContent = "Backlog-Geral";
+                bOrg.textContent = "ISTEO";
+                bProj.textContent = "Torre de IA SENAI";
             }
         }
 
@@ -676,46 +671,83 @@
 
             try {
                 const { org, project, pat, plannedField, actualField } = azureConfig;
+                const epicTarget = (azureConfig.epicFilter || DEFAULT_EPIC_TARGET).trim();
                 const authHeader = 'Basic ' + btoa(':' + pat);
                 const baseUrl = `https://dev.azure.com/${encodeURIComponent(org)}/${encodeURIComponent(project)}/_apis/wit`;
 
-                // 1. Consulta WIQL para trazer TODO o Backlog (sem filtro de Sprint)
-                const wiqlQuery = {
-                    query: `SELECT [System.Id] FROM WorkItems 
-                            WHERE [System.TeamProject] = @project 
-                            AND [System.WorkItemType] IN ('Epic', 'Feature', 'User Story', 'Task', 'Bug')
-                            AND [System.State] <> 'Removed'
-                            ORDER BY [System.Id] DESC`
+                // Passo 1: Descobrir o ID numérico do Épico alvo (se o usuário digitou o título)
+                let epicIds = [];
+                if (/^\d+$/.test(epicTarget)) {
+                    epicIds = [parseInt(epicTarget, 10)];
+                } else {
+                    const safeTitle = epicTarget.replace(/'/g, "''");
+                    const findEpicResp = await fetch(`${baseUrl}/wiql?api-version=7.1`, {
+                        method: 'POST',
+                        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: `SELECT [System.Id] FROM WorkItems 
+                                    WHERE [System.TeamProject] = @project 
+                                    AND [System.WorkItemType] = 'Epic' 
+                                    AND [System.Title] CONTAINS '${safeTitle}'`
+                        })
+                    });
+                    if (!findEpicResp.ok) throw new Error(`Erro HTTP ${findEpicResp.status} ao buscar o Épico.`);
+                    const findEpicData = await findEpicResp.json();
+                    epicIds = (findEpicData.workItems || []).map(w => w.id);
+                }
+
+                if (epicIds.length === 0) {
+                    throw new Error(`Épico "${epicTarget}" não encontrado no projeto.`);
+                }
+
+                // Passo 2: Buscar toda a árvore hierárquica (Features, User Stories, Tasks, Bugs) abaixo do Épico
+                const treeQuery = {
+                    query: `SELECT [System.Id] FROM WorkItemLinks 
+                            WHERE ([Source].[System.Id] IN (${epicIds.join(',')})) 
+                            AND ([System.Links.LinkType] = 'System.LinkTypes.Hierarchy-Forward') 
+                            AND ([Target].[System.WorkItemType] IN ('Feature', 'User Story', 'Task', 'Bug')) 
+                            AND ([Target].[System.State] <> 'Removed') 
+                            MODE (Recursive)`
                 };
 
                 const wiqlResp = await fetch(`${baseUrl}/wiql?api-version=7.1`, {
                     method: 'POST',
                     headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(wiqlQuery)
+                    body: JSON.stringify(treeQuery)
                 });
 
-                if (!wiqlResp.ok) throw new Error(`Erro HTTP ${wiqlResp.status} ao consultar WIQL.`);
+                if (!wiqlResp.ok) throw new Error(`Erro HTTP ${wiqlResp.status} ao consultar hierarquia do Épico.`);
                 const wiqlData = await wiqlResp.json();
-                const ids = (wiqlData.workItems || []).map(w => w.id).slice(0, 200);
 
-                if (ids.length === 0) {
+                // Extrair apenas os IDs filhos (excluindo os próprios IDs de Epic)
+                const childIds = [...new Set(
+                    (wiqlData.workItemRelations || [])
+                        .filter(rel => rel.target && !epicIds.includes(rel.target.id))
+                        .map(rel => rel.target.id)
+                )];
+
+                if (childIds.length === 0) {
                     backlogItems = [];
                 } else {
-                    // 2. Buscar detalhes dos Work Items em lote
+                    // Passo 3: Buscar detalhes em lotes de até 200 itens por requisição (limite da API Azure)
                     const fields = [
                         'System.Id', 'System.WorkItemType', 'System.Title', 'System.State',
                         'System.AssignedTo', 'System.AreaPath', 'System.Description',
                         plannedField, actualField
                     ].join(',');
 
-                    const batchResp = await fetch(`${baseUrl}/workitems?ids=${ids.join(',')}&fields=${encodeURIComponent(fields)}&api-version=7.1`, {
-                        headers: { 'Authorization': authHeader }
-                    });
+                    const allRawItems = [];
+                    for (let i = 0; i < childIds.length; i += 200) {
+                        const chunk = childIds.slice(i, i + 200);
+                        const batchResp = await fetch(`${baseUrl}/workitems?ids=${chunk.join(',')}&fields=${encodeURIComponent(fields)}&api-version=7.1`, {
+                            headers: { 'Authorization': authHeader }
+                        });
+                        if (!batchResp.ok) throw new Error(`Erro HTTP ${batchResp.status} ao carregar Work Items.`);
+                        const batchData = await batchResp.json();
+                        allRawItems.push(...(batchData.value || []));
+                    }
 
-                    if (!batchResp.ok) throw new Error(`Erro HTTP ${batchResp.status} ao carregar Work Items.`);
-                    const batchData = await batchResp.json();
-
-                    backlogItems = (batchData.value || []).map(wi => {
+                    backlogItems = allRawItems.map(wi => {
                         const f = wi.fields || {};
                         const assigned = f['System.AssignedTo']?.displayName || 'Não Atribuído';
                         const rawState = (f['System.State'] || 'TODO').toUpperCase();
@@ -725,8 +757,8 @@
                             title: f['System.Title'] || '(Sem título)',
                             user: assigned,
                             status: STATUS_LIST.includes(rawState) ? rawState : rawState,
-                            plannedEffort: parseFloat(f[plannedField]) || 0,
-                            actualEffort: parseFloat(f[actualField]) || 0,
+                            plannedEffort: round1(parseFloat(f[plannedField]) || 0),
+                            actualEffort: round1(parseFloat(f[actualField]) || 0),
                             area: f['System.AreaPath'] || project,
                             description: (f['System.Description'] || 'Sem descrição detalhada.').replace(/<[^>]*>?/gm, '')
                         };
@@ -736,7 +768,9 @@
                 rebuildTeamDirectory();
                 applyFilters();
                 if (activeMemberDrawerUser) populateMemberDrawer(activeMemberDrawerUser);
-                showToast(isAuto ? `Sincronizado automaticamente (${backlogItems.length} itens).` : `${backlogItems.length} Work Items sincronizados do Azure!`);
+                showToast(isAuto
+                    ? `Sincronizado automaticamente (${backlogItems.length} itens do Épico).`
+                    : `${backlogItems.length} Work Items sincronizados do Épico!`);
             } catch (err) {
                 console.error(err);
                 showToast(`Falha na API Azure: ${err.message}`);
@@ -774,8 +808,9 @@
         function openConfigModal() {
             document.getElementById('cfgOrg').value = azureConfig.org || '';
             document.getElementById('cfgProject').value = azureConfig.project || '';
+            document.getElementById('cfgEpicFilter').value = azureConfig.epicFilter || DEFAULT_EPIC_TARGET;
             document.getElementById('cfgPat').value = azureConfig.pat || '';
-            document.getElementById('cfgPlannedField').value = azureConfig.plannedField || 'Microsoft.VSTS.Scheduling.Effort';
+            document.getElementById('cfgPlannedField').value = azureConfig.plannedField || 'Microsoft.VSTS.Scheduling.RemainingWork';
             document.getElementById('cfgActualField').value = azureConfig.actualField || 'Microsoft.VSTS.Scheduling.CompletedWork';
             document.getElementById('cfgProjectBudget').value = projectTotalHours;
 
@@ -793,8 +828,9 @@
         function saveAndConnectAzureApi() {
             const org = document.getElementById('cfgOrg').value.trim();
             const project = document.getElementById('cfgProject').value.trim();
+            const epicFilter = document.getElementById('cfgEpicFilter').value.trim() || DEFAULT_EPIC_TARGET;
             const pat = document.getElementById('cfgPat').value.trim();
-            const plannedField = document.getElementById('cfgPlannedField').value.trim() || 'Microsoft.VSTS.Scheduling.Effort';
+            const plannedField = document.getElementById('cfgPlannedField').value.trim() || 'Microsoft.VSTS.Scheduling.RemainingWork';
             const actualField = document.getElementById('cfgActualField').value.trim() || 'Microsoft.VSTS.Scheduling.CompletedWork';
             const budget = parseFloat(document.getElementById('cfgProjectBudget').value);
 
@@ -808,7 +844,7 @@
                 localStorage.setItem('azure_project_budget', String(budget));
             }
 
-            azureConfig = { org, project, pat, plannedField, actualField };
+            azureConfig = { org, project, epicFilter, pat, plannedField, actualField };
             localStorage.setItem('azure_devops_backlog_cfg', JSON.stringify(azureConfig));
 
             updateConnectionHeaderUI();
@@ -818,7 +854,14 @@
 
         function disconnectAzureApi() {
             localStorage.removeItem('azure_devops_backlog_cfg');
-            azureConfig = { org: "", project: "", pat: "", plannedField: "Microsoft.VSTS.Scheduling.Effort", actualField: "Microsoft.VSTS.Scheduling.CompletedWork" };
+            azureConfig = {
+                org: "",
+                project: "",
+                epicFilter: DEFAULT_EPIC_TARGET,
+                pat: "",
+                plannedField: "Microsoft.VSTS.Scheduling.RemainingWork",
+                actualField: "Microsoft.VSTS.Scheduling.CompletedWork"
+            };
             backlogItems = [...demoWorkItems];
             updateConnectionHeaderUI();
             rebuildTeamDirectory();
@@ -953,28 +996,28 @@
                 localStorage.setItem('azure_project_budget', String(val));
                 toggleProjectBudgetEdit();
                 updateKPIs(filteredItems);
-                showToast(`Horas totais do projeto ajustadas para ${projectTotalHours.toLocaleString('pt-BR')}h.`);
+                showToast(`Horas totais do projeto ajustadas para ${fmtHours(projectTotalHours)}h.`);
             }
         }
 
         function updateKPIs(items) {
-            // KPI 1: Horas Gerais do Projeto (Todo o backlog do projeto)
-            const projectTotalUsed = backlogItems.reduce((sum, i) => sum + i.actualEffort, 0);
-            const projectRemaining = projectTotalHours - projectTotalUsed;
+            // KPI 1: Horas Gerais do Projeto
+            const projectTotalUsed = round1(backlogItems.reduce((sum, i) => sum + i.actualEffort, 0));
+            const projectRemaining = round1(projectTotalHours - projectTotalUsed);
             const projectUsedPct = projectTotalHours > 0 ? Math.round((projectTotalUsed / projectTotalHours) * 100) : 0;
 
-            document.getElementById('kpiProjectUsedHours').textContent = `${projectTotalUsed.toLocaleString('pt-BR')}h`;
-            document.getElementById('kpiProjectTotalHours').textContent = `/ ${projectTotalHours.toLocaleString('pt-BR')}h totais`;
+            document.getElementById('kpiProjectUsedHours').textContent = `${fmtHours(projectTotalUsed)}h`;
+            document.getElementById('kpiProjectTotalHours').textContent = `/ ${fmtHours(projectTotalHours)}h totais`;
             document.getElementById('kpiProjectUsedPct').textContent = `${projectUsedPct}%`;
 
             const remEl = document.getElementById('kpiProjectRemainingHours');
             const barEl = document.getElementById('kpiProjectBudgetBar');
             if (projectRemaining >= 0) {
-                remEl.textContent = `${projectRemaining.toLocaleString('pt-BR')}h`;
+                remEl.textContent = `${fmtHours(projectRemaining)}h`;
                 remEl.className = "text-azure-text";
                 barEl.className = "bg-azure-dark h-1.5 rounded-full transition-all duration-500";
             } else {
-                remEl.textContent = `${Math.abs(projectRemaining).toLocaleString('pt-BR')}h excedidas`;
+                remEl.textContent = `${fmtHours(Math.abs(projectRemaining))}h excedidas`;
                 remEl.className = "text-azure-danger";
                 barEl.className = "bg-azure-danger h-1.5 rounded-full transition-all duration-500";
             }
@@ -982,19 +1025,19 @@
 
             // KPIs 2, 3 e 4: Escopo filtrado
             const totalItems = items.length;
-            const plannedTotal = items.reduce((sum, i) => sum + i.plannedEffort, 0);
-            const actualTotal = items.reduce((sum, i) => sum + i.actualEffort, 0);
+            const plannedTotal = round1(items.reduce((sum, i) => sum + i.plannedEffort, 0));
+            const actualTotal = round1(items.reduce((sum, i) => sum + i.actualEffort, 0));
             const doneCount = items.filter(i => i.status === 'DONEE').length;
             const waitingCount = items.filter(i => i.status === 'WATING' || i.status === 'WAITING FOR INTEGRATION').length;
 
             const completionRate = totalItems > 0 ? ((doneCount / totalItems) * 100).toFixed(1) : "0.0";
             const effortRatio = plannedTotal > 0 ? Math.round((actualTotal / plannedTotal) * 100) : 0;
-            const variance = plannedTotal - actualTotal;
+            const variance = round1(plannedTotal - actualTotal);
 
-            document.getElementById('kpiPlannedEffort').textContent = `${plannedTotal}h`;
+            document.getElementById('kpiPlannedEffort').textContent = `${fmtHours(plannedTotal)}h`;
             document.getElementById('kpiTotalItemsBadge').textContent = `em ${totalItems} ${totalItems === 1 ? 'item' : 'itens'}`;
 
-            const typeCounts = ["Epic", "Feature", "User Story", "Task", "Bug"].map(t => ({
+            const typeCounts = ["Feature", "User Story", "Task", "Bug"].map(t => ({
                 type: t,
                 count: items.filter(i => i.type === t).length
             })).filter(x => x.count > 0);
@@ -1006,15 +1049,15 @@
                 }).join('')
                 : `<span class="text-azure-textMuted">Nenhum item</span>`;
 
-            document.getElementById('kpiActualEffort').textContent = `${actualTotal}h`;
+            document.getElementById('kpiActualEffort').textContent = `${fmtHours(actualTotal)}h`;
             document.getElementById('kpiEffortRatioBadge').textContent = `${effortRatio}% do esforço`;
 
             const varianceEl = document.getElementById('kpiEffortVariance');
             if (variance >= 0) {
-                varianceEl.textContent = `${variance}h restantes`;
+                varianceEl.textContent = `${fmtHours(variance)}h restantes`;
                 varianceEl.className = "font-semibold text-azure-text";
             } else {
-                varianceEl.textContent = `+${Math.abs(variance)}h acima`;
+                varianceEl.textContent = `+${fmtHours(Math.abs(variance))}h acima`;
                 varianceEl.className = "font-semibold text-azure-warning";
             }
             document.getElementById('kpiEffortBurnBar').style.width = `${Math.min(100, effortRatio)}%`;
@@ -1030,7 +1073,7 @@
         }
 
         // =========================================================================
-        // 6. GRÁFICOS SVG NATIVOS (100% CONFIÁVEIS E INTERATIVOS)
+        // 6. GRÁFICOS SVG NATIVOS
         // =========================================================================
         function renderEffortBarChartSVG(items) {
             const container = document.getElementById('effortBarChartContainer');
@@ -1047,8 +1090,8 @@
                 return {
                     user: u,
                     shortName: u.split(' ')[0] + (u.split(' ')[1] ? ' ' + u.split(' ')[1][0] + '.' : ''),
-                    planned: uItems.reduce((s, i) => s + i.plannedEffort, 0),
-                    actual: uItems.reduce((s, i) => s + i.actualEffort, 0)
+                    planned: round1(uItems.reduce((s, i) => s + i.plannedEffort, 0)),
+                    actual: round1(uItems.reduce((s, i) => s + i.actualEffort, 0))
                 };
             });
 
@@ -1058,11 +1101,10 @@
 
             const svgW = Math.max(640, users.length * 105);
             const svgH = 270;
-            const padL = 46, padR = 20, padT = 20, padB = 46;
+            const padL = 46, padR = 20, padT = 22, padB = 46;
             const plotW = svgW - padL - padR;
             const plotH = svgH - padT - padB;
 
-            // Linhas de grade horizontais
             let gridLines = '';
             for (let i = 0; i <= 5; i++) {
                 const val = step * i;
@@ -1073,7 +1115,6 @@
                 `;
             }
 
-            // Grupos de barras por usuário
             const slotW = plotW / series.length;
             const barW = Math.min(28, slotW * 0.28);
             let barsSvg = '';
@@ -1089,19 +1130,16 @@
                     <g class="cursor-pointer group" onclick="openMemberDrawer('${s.user.replace(/'/g, "\\'")}')">
                         <rect x="${centerX - slotW * 0.44}" y="${padT}" width="${slotW * 0.88}" height="${plotH}" fill="transparent" class="group-hover:fill-[#EFF6FC]/60 transition-colors" rx="4" />
                         
-                        <!-- Barra Esforço Planejado -->
                         <rect x="${centerX - barW - 2}" y="${yPlanned}" width="${barW}" height="${Math.max(0, plannedH)}" fill="#0078D4" rx="3">
-                            <title>${s.user} — Esforço Planejado: ${s.planned}h</title>
+                            <title>${s.user} — Esforço Planejado: ${fmtHours(s.planned)}h</title>
                         </rect>
-                        ${s.planned > 0 ? `<text x="${centerX - barW / 2 - 2}" y="${yPlanned - 5}" text-anchor="middle" fill="#0078D4" font-size="10" font-weight="600">${s.planned}h</text>` : ''}
+                        ${s.planned > 0 ? `<text x="${centerX - barW / 2 - 2}" y="${yPlanned - 5}" text-anchor="middle" fill="#0078D4" font-size="10" font-weight="600">${fmtHours(s.planned)}h</text>` : ''}
 
-                        <!-- Barra Esforço Real -->
                         <rect x="${centerX + 2}" y="${yActual}" width="${barW}" height="${Math.max(0, actualH)}" fill="#008272" rx="3">
-                            <title>${s.user} — Esforço Real: ${s.actual}h</title>
+                            <title>${s.user} — Esforço Real: ${fmtHours(s.actual)}h</title>
                         </rect>
-                        ${s.actual > 0 ? `<text x="${centerX + barW / 2 + 2}" y="${yActual - 5}" text-anchor="middle" fill="#008272" font-size="10" font-weight="600">${s.actual}h</text>` : ''}
+                        ${s.actual > 0 ? `<text x="${centerX + barW / 2 + 2}" y="${yActual - 5}" text-anchor="middle" fill="#008272" font-size="10" font-weight="600">${fmtHours(s.actual)}h</text>` : ''}
 
-                        <!-- Nome do Colaborador no Eixo X -->
                         <text x="${centerX}" y="${svgH - 22}" text-anchor="middle" fill="#323130" font-size="11" font-weight="600" class="group-hover:fill-[#0078D4]">${s.shortName}</text>
                         <text x="${centerX}" y="${svgH - 8}" text-anchor="middle" fill="#605E5C" font-size="9">Ver itens</text>
                     </g>
@@ -1206,8 +1244,8 @@
                 const userItems = backlogItems.filter(i => i.user === user);
                 const totalItems = userItems.length;
                 const completedItems = userItems.filter(i => i.status === 'DONEE').length;
-                const plannedH = userItems.reduce((s, i) => s + i.plannedEffort, 0);
-                const actualH = userItems.reduce((s, i) => s + i.actualEffort, 0);
+                const plannedH = round1(userItems.reduce((s, i) => s + i.plannedEffort, 0));
+                const actualH = round1(userItems.reduce((s, i) => s + i.actualEffort, 0));
                 const completionPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
                 const isHighlighted = selectedUserFilter === user || activeMemberDrawerUser === user;
 
@@ -1232,11 +1270,11 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-azure-textMuted">Esforço Plan.:</span>
-                                    <span class="font-mono font-medium text-azure-primary">${plannedH}h</span>
+                                    <span class="font-mono font-medium text-azure-primary">${fmtHours(plannedH)}h</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-azure-textMuted">Esforço Real:</span>
-                                    <span class="font-mono font-semibold text-[#008272]">${actualH}h</span>
+                                    <span class="font-mono font-semibold text-[#008272]">${fmtHours(actualH)}h</span>
                                 </div>
                             </div>
                         </div>
@@ -1277,8 +1315,8 @@
             const meta = teamMembers[userName] || { initials: "??", color: "#0078D4", role: "Membro" };
             const userItems = backlogItems.filter(i => i.user === userName);
 
-            const plannedH = userItems.reduce((s, i) => s + i.plannedEffort, 0);
-            const actualH = userItems.reduce((s, i) => s + i.actualEffort, 0);
+            const plannedH = round1(userItems.reduce((s, i) => s + i.plannedEffort, 0));
+            const actualH = round1(userItems.reduce((s, i) => s + i.actualEffort, 0));
             const doneCount = userItems.filter(i => i.status === 'DONEE').length;
             const rate = userItems.length > 0 ? Math.round((doneCount / userItems.length) * 100) : 0;
 
@@ -1288,7 +1326,7 @@
                 </div>
                 <div>
                     <h3 class="text-base font-semibold text-azure-text">Atividades Vinculadas a ${userName}</h3>
-                    <p class="text-xs text-azure-textMuted">${meta.role} • Backlog Geral</p>
+                    <p class="text-xs text-azure-textMuted">${meta.role} • ${azureConfig.epicFilter}</p>
                 </div>
             `;
 
@@ -1299,11 +1337,11 @@
                 </div>
                 <div class="bg-white p-2.5 rounded border border-azure-border">
                     <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Esforço Planejado</div>
-                    <div class="text-base font-bold text-azure-primary mt-0.5">${plannedH}h</div>
+                    <div class="text-base font-bold text-azure-primary mt-0.5">${fmtHours(plannedH)}h</div>
                 </div>
                 <div class="bg-white p-2.5 rounded border border-azure-border">
                     <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Esforço Real</div>
-                    <div class="text-base font-bold text-[#008272] mt-0.5">${actualH}h</div>
+                    <div class="text-base font-bold text-[#008272] mt-0.5">${fmtHours(actualH)}h</div>
                 </div>
                 <div class="bg-white p-2.5 rounded border border-azure-border">
                     <div class="text-[10px] uppercase font-semibold text-azure-textMuted">Taxa DONEE</div>
@@ -1341,8 +1379,8 @@
 
                             <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-azure-border/60 text-xs">
                                 <div class="flex items-center space-x-4">
-                                    <span>Esforço: <strong class="font-mono text-azure-text">${item.plannedEffort}h</strong></span>
-                                    <span>Esforço Real: <strong class="font-mono text-[#008272]">${item.actualEffort}h</strong></span>
+                                    <span>Esforço: <strong class="font-mono text-azure-text">${fmtHours(item.plannedEffort)}h</strong></span>
+                                    <span>Esforço Real: <strong class="font-mono text-[#008272]">${fmtHours(item.actualEffort)}h</strong></span>
                                 </div>
                                 <div class="flex items-center space-x-2 w-28">
                                     <div class="flex-1 bg-azure-bg rounded-full h-1.5">
@@ -1416,8 +1454,8 @@
                                 <span>${item.status}</span>
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-right font-mono text-xs text-azure-textMuted whitespace-nowrap">${item.plannedEffort}h</td>
-                        <td class="py-3 px-4 text-right font-mono text-xs font-semibold ${isOverEffort ? 'text-azure-warning' : 'text-[#008272]'} whitespace-nowrap">${item.actualEffort}h</td>
+                        <td class="py-3 px-4 text-right font-mono text-xs text-azure-textMuted whitespace-nowrap">${fmtHours(item.plannedEffort)}h</td>
+                        <td class="py-3 px-4 text-right font-mono text-xs font-semibold ${isOverEffort ? 'text-azure-warning' : 'text-[#008272]'} whitespace-nowrap">${fmtHours(item.actualEffort)}h</td>
                         <td class="py-3 px-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
                                 <div class="flex-1 bg-azure-bg rounded-full h-1.5 overflow-hidden">
@@ -1480,11 +1518,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="editPlanned" class="block text-xs font-semibold text-azure-text mb-1">Esforço Planejado (h)</label>
-                            <input type="number" id="editPlanned" min="0" max="500" step="1" value="${item.plannedEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
+                            <input type="number" id="editPlanned" min="0" max="500" step="0.5" value="${item.plannedEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
                         </div>
                         <div>
                             <label for="editActual" class="block text-xs font-semibold text-azure-text mb-1">Esforço Real (h)</label>
-                            <input type="number" id="editActual" min="0" max="500" step="1" value="${item.actualEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
+                            <input type="number" id="editActual" min="0" max="500" step="0.5" value="${item.actualEffort}" class="w-full bg-white border border-azure-borderDark rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-azure-primary">
                         </div>
                     </div>
                 </div>
@@ -1517,10 +1555,9 @@
 
             const newUser = document.getElementById('editUser').value;
             const newStatus = document.getElementById('editStatus').value;
-            const newPlanned = Math.max(0, parseFloat(document.getElementById('editPlanned').value) || 0);
-            const newActual = Math.max(0, parseFloat(document.getElementById('editActual').value) || 0);
+            const newPlanned = round1(Math.max(0, parseFloat(document.getElementById('editPlanned').value) || 0));
+            const newActual = round1(Math.max(0, parseFloat(document.getElementById('editActual').value) || 0));
 
-            // Se conectado na API real do Azure DevOps, envia PATCH para atualizar lá também
             if (isAzureConfigured()) {
                 try {
                     const { org, project, pat, plannedField, actualField } = azureConfig;
